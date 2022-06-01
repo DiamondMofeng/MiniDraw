@@ -20,6 +20,8 @@ function App() {
       <Buttons pen={pen} />
       <Canvas pen={pen} width={900} height={600} />
       <p>Copyright ©2021-2022 Mofeng. All Rights Reserved.
+      </p>
+      <p>
         <a href={"https://blog.mofengfeng.com/"}>Blog</a>|<a href={"https://github.com/DiamondMofeng/"}>Github</a>
       </p>
     </div>
