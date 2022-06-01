@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/MiniDraw/static/js/main.98fe19f0.js",
+    "main.js": "/MiniDraw/static/js/main.50210825.js",
     "index.html": "/MiniDraw/index.html",
-    "main.98fe19f0.js.map": "/MiniDraw/static/js/main.98fe19f0.js.map"
+    "main.50210825.js.map": "/MiniDraw/static/js/main.50210825.js.map"
   },
   "entrypoints": [
-    "static/js/main.98fe19f0.js"
+    "static/js/main.50210825.js"
   ]
 }
