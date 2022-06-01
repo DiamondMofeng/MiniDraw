@@ -14,7 +14,7 @@ function App() {
 
   return (
     <div className="App">
-      <Buttons />
+      <Buttons pen={pen} />
       <Canvas pen={pen} />
     </div>
   );

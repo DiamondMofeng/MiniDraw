@@ -44,17 +44,17 @@ class Canvas extends Component {
 
     //获取当前真实canvasDOM对象
     const canvas = this.canvas.current;
-    const ctx = canvas.getContext("2d");
+    // const ctx = canvas.getContext("2d");
 
     //绑定pen与画布（向画布中注入pen的鼠标事件）
     this.pen.injectEvent(canvas);
 
 
-    ctx.fillStyle = "rgb(200,0,0)";
-    ctx.fillRect(10, 10, 55, 50);
+    // ctx.fillStyle = "rgb(200,0,0)";
+    // ctx.fillRect(10, 10, 55, 50);
 
-    ctx.fillStyle = "rgba(0, 0, 200, 0.5)";
-    ctx.fillRect(30, 30, 55, 50);
+    // ctx.fillStyle = "rgba(0, 0, 200, 0.5)";
+    // ctx.fillRect(30, 30, 55, 50);
 
   }
 

@@ -32,6 +32,8 @@ const Style_Button_Chossen = {
  */
 const Buttons = ({ pen }) => {
 
+  // const pen=pen
+
   const [choosenType, setChoosenType] = React.useState(null)
 
   const handleClick = (type) => {
@@ -45,6 +47,7 @@ const Buttons = ({ pen }) => {
     <div>
       {Object.values(ENUM_PEN_TYPES).map((type) =>
         <button
+          key={type}
           style={choosenType === type ? Style_Button_Chossen : Style_Button}
           onClick={function () { return handleClick(type) }}
         >
@@ -52,7 +55,9 @@ const Buttons = ({ pen }) => {
         </button>
       )}
 
-      <button style={Style_Button}>undo</button>
+      <button style={Style_Button}
+        onClick={function () { return pen.undo() }}
+      >undo</button>
     </div>
   )
 }

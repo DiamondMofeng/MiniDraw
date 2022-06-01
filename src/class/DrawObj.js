@@ -4,11 +4,11 @@ import ENUM_PEN_TYPES from "../types/penTypes";
  */
 class DrawObj {
   constructor(type) {
-    super();
     this.type = type;
     // this.startX = x;
     // this.startY = y;
   }
+  draw(ctx) { }
 }
 
 class Line extends DrawObj {
