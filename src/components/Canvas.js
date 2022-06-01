@@ -7,7 +7,6 @@ const style = {
 
 
 class Canvas extends Component {
-
   /**
    * 
    * @param {Pen} pen - util中的画笔的实例对象
@@ -23,8 +22,6 @@ class Canvas extends Component {
 
     this.width = width || 750;
     this.height = height || 750;
-
-
   }
 
   render() {
@@ -34,31 +31,19 @@ class Canvas extends Component {
       </canvas>
     )
   }
-
   componentDidMount() {
 
     //禁用浏览器右键菜单，方便后续操作
     window.oncontextmenu = (e) => {
       e.preventDefault();
     }
-
+    
     //获取当前真实canvasDOM对象
     const canvas = this.canvas.current;
-    // const ctx = canvas.getContext("2d");
 
     //绑定pen与画布（向画布中注入pen的鼠标事件）
     this.pen.injectEvent(canvas);
-
-
-    // ctx.fillStyle = "rgb(200,0,0)";
-    // ctx.fillRect(10, 10, 55, 50);
-
-    // ctx.fillStyle = "rgba(0, 0, 200, 0.5)";
-    // ctx.fillRect(30, 30, 55, 50);
-
   }
-
-
 }
 
 

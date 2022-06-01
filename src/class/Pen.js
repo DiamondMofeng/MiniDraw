@@ -19,7 +19,6 @@ class Pen {
     this.canvasComponent = undefined;//绑定的canvas组件
     this.canvas = undefined;  //canvas Dom对象
 
-    // this.stack = undefined;//画笔记录栈
     this.stack = [];//画笔记录栈
 
     this.onDraw = false;
@@ -85,10 +84,41 @@ class Pen {
 
     // canvasObj.addEventListener('mousedown', console.log, false)
     // canvasObj.addEventListener('mouseup', console.log, false)
+    // canvasObj.addEventListener('mousemove', console.log, false)
 
     canvasObj.addEventListener('mousedown', handleMouseDown, false)
     canvasObj.addEventListener('mouseup', handleMouseUp, false)
     canvasObj.addEventListener('mousemove', handleMouseMove, false)
+
+    //加入对触屏的支持
+    const touchToMouse = {
+      'touchstart': 'mousedown',
+      'touchend': 'mouseup',
+      'touchmove': 'mousemove'
+    }
+
+    for (let touchEvent in touchToMouse) {
+
+
+      canvasObj.addEventListener(touchEvent, (e) => {
+        e.preventDefault();
+        if (e.touches.length !== 1) {
+          return
+        }
+
+        let touch = e.touches[0];
+        if (!touch) {
+          return
+        }
+        let simMouseEvent = new MouseEvent(touchToMouse[touchEvent], {
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+        });
+        // return simMouseEvent
+        canvasObj.dispatchEvent(simMouseEvent);
+
+      }, false)
+    }
 
   }
 
@@ -151,7 +181,6 @@ class Pen {
 
         });
 
-        // TODO BUG
         // 仅用作预览
         this.bindEventListener('mousemove', (e) => {
           if (this.onDraw === false) {
