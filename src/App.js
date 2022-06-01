@@ -19,8 +19,8 @@ function App() {
       </p>
       <Buttons pen={pen} />
       <Canvas pen={pen} width={900} height={600} />
-      <p>
-        <a href={"https://blog.mofengfeng.com/"}>Copyright ©2021-2022 Mofeng. All Rights Reserved.</a>
+      <p>Copyright ©2021-2022 Mofeng. All Rights Reserved.
+        <a href={"https://blog.mofengfeng.com/"}>Blog</a>|<a href={"https://github.com/DiamondMofeng/"}>Github</a>
       </p>
     </div>
   );
