@@ -1,4 +1,7 @@
 import ENUM_PEN_TYPES from "../types/penTypes";
+
+//! ！！！！ 没用上
+
 /**
  * 储存绘制对象的基本信息
  */

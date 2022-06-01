@@ -1,8 +1,8 @@
 const ENUM_PEN_TYPES = {
-  line: 'line',
   free: 'free',
+  line: 'line',
   rect: 'rect',
   circle: 'circle',
-  multiLine: 'multiLine'
+  multiLines: 'multiLines'
 }
 export default ENUM_PEN_TYPES

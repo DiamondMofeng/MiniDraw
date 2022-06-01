@@ -1,4 +1,3 @@
-import './App.css';
 import Canvas from './components/Canvas';
 import Pen from './class/Pen';
 import Buttons from './components/Buttons';
@@ -13,9 +12,16 @@ function App() {
 
 
   return (
-    <div className="App">
+    <div className="App" style={{ textAlign: "center" }}>
+      <p>
+        提示：鼠标悬浮可查看具体的按钮名称； multiLines模式下,单击左键绘制各路径点，右键完成绘制。
+        其他模式下按住左键开始绘制，松开左键完成绘制。
+      </p>
       <Buttons pen={pen} />
-      <Canvas pen={pen} />
+      <Canvas pen={pen} width={900} height={600} />
+      <p>
+        <a href={"https://blog.mofengfeng.com/"}>Copyright ©2021-2022 Mofeng. All Rights Reserved.</a>
+      </p>
     </div>
   );
 }

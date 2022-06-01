@@ -23,6 +23,21 @@ const Style_Button_Chossen = {
 
 }
 
+const BUTTON_TYPE_UNDO = "undo"
+const BUTTON_TYPE_CLEAR = "clear"
+
+const map_typeToEmoji = {
+  [ENUM_PEN_TYPES.line]: "📏",
+  [ENUM_PEN_TYPES.rect]: "⬜",
+  [ENUM_PEN_TYPES.circle]: "⚪",
+  [ENUM_PEN_TYPES.free]: "🖌️",
+  [ENUM_PEN_TYPES.multiLines]: "📉",
+
+  [BUTTON_TYPE_UNDO]: "↩️",
+  [BUTTON_TYPE_CLEAR]: "🗑️",
+
+}
+
 
 //* ==================Component=====================
 
@@ -49,15 +64,25 @@ const Buttons = ({ pen }) => {
         <button
           key={type}
           style={choosenType === type ? Style_Button_Chossen : Style_Button}
-          onClick={function () { return handleClick(type) }}
+          onClick={() => handleClick(type)}
+          title={type}
         >
-          {type}
+          {map_typeToEmoji[type] || type}
         </button>
       )}
 
       <button style={Style_Button}
-        onClick={function () { return pen.undo() }}
-      >undo</button>
+        onClick={() => pen.undo()}
+        title={BUTTON_TYPE_UNDO}
+      >
+        {map_typeToEmoji[BUTTON_TYPE_UNDO] || BUTTON_TYPE_UNDO}
+      </button>
+      <button style={Style_Button}
+        onClick={() => { pen.clearStack(); pen.clearCanvas() }}
+        title={BUTTON_TYPE_CLEAR}
+      >
+        {map_typeToEmoji[BUTTON_TYPE_CLEAR] || BUTTON_TYPE_CLEAR}
+      </button>
     </div>
   )
 }

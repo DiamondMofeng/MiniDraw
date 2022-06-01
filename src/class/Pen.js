@@ -128,10 +128,12 @@ class Pen {
       case ENUM_PEN_TYPES.line:
 
         this.bindEventListener('mousedown', (e) => {
+
           this.setOnDrawToTrue();
-          this.ctx.beginPath();
-          this.ctx.moveTo(e.offsetX, e.offsetY);
+          this.savePreview();//保存预览前的图像
+
         });
+
         this.bindEventListener('mouseup', (e) => {
 
           if (this.onDraw === false) {
@@ -139,12 +141,32 @@ class Pen {
           }
 
           this.setOnDrawToFalse();
+
+          this.ctx.beginPath();
+          this.ctx.moveTo(this.downX, this.downY);
           this.ctx.lineTo(e.offsetX, e.offsetY);
           this.ctx.stroke();
 
           this.stack.push(this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height));
 
         });
+
+        // TODO BUG
+        // 仅用作预览
+        this.bindEventListener('mousemove', (e) => {
+          if (this.onDraw === false) {
+            return
+          }
+          this.clearCanvas();
+          console.log('cleared!')
+          this.readPreview();
+
+          this.ctx.beginPath();
+          this.ctx.moveTo(this.downX, this.downY);
+          this.ctx.lineTo(e.offsetX, e.offsetY);
+          this.ctx.stroke();
+
+        })
         break;
 
       case ENUM_PEN_TYPES.free:
@@ -155,6 +177,7 @@ class Pen {
           this.ctx.moveTo(e.offsetX, e.offsetY);
         });
 
+        //实时显示，无需另加预览
         this.bindEventListener('mousemove', (e) => {
           if (this.onDraw === false) {
             return
@@ -182,6 +205,7 @@ class Pen {
 
         this.bindEventListener('mousedown', (e) => {
           this.setOnDrawToTrue();
+          this.savePreview();
         });
 
         this.bindEventListener('mouseup', (e) => {
@@ -197,12 +221,25 @@ class Pen {
 
         });
 
+        // 仅用作预览
+        this.bindEventListener('mousemove', (e) => {
+          if (this.onDraw === false) {
+            return
+          }
+          this.clearCanvas();
+          this.readPreview();
+
+          this.ctx.strokeRect(e.offsetX, e.offsetY, this.downX - e.offsetX, this.downY - e.offsetY);
+
+        })
+
         break;
 
       case ENUM_PEN_TYPES.circle:
 
         this.bindEventListener('mousedown', (e) => {
           this.setOnDrawToTrue();
+          this.savePreview();
         });
 
         this.bindEventListener('mouseup', (e) => {
@@ -213,20 +250,33 @@ class Pen {
 
           this.setOnDrawToFalse();
 
-          let centerX = (this.upX + this.downX) / 2
-          let centerY = (this.upY + this.downY) / 2
+          let centerX = (e.offsetX + this.downX) / 2
+          let centerY = (e.offsetY + this.downY) / 2
           this.ctx.beginPath();
-          this.ctx.ellipse(centerX, centerY, Math.abs((this.upX - this.downX) / 2), Math.abs((this.upY - this.downY)) / 2, 0, 0, 2 * Math.PI);
+          this.ctx.ellipse(centerX, centerY, Math.abs((e.offsetX - this.downX) / 2), Math.abs((e.offsetY - this.downY)) / 2, 0, 0, 2 * Math.PI);
           this.ctx.stroke()
 
           this.stack.push(this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height));
-          // this.ctx.arc(centerX, centerY, Math.abs((e.offsetX - this.downX) / 2), 0, 2 * Math.PI);
-          // this.ctx.stroke();
         });
+
+        this.bindEventListener('mousemove', (e) => {
+          if (this.onDraw === false) {
+            return
+          }
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          this.readPreview();
+
+          let centerX = (e.offsetX + this.downX) / 2
+          let centerY = (e.offsetY + this.downY) / 2
+          this.ctx.beginPath();
+          this.ctx.ellipse(centerX, centerY, Math.abs((e.offsetX - this.downX) / 2), Math.abs((e.offsetY - this.downY)) / 2, 0, 0, 2 * Math.PI);
+          this.ctx.stroke()
+
+        })
 
         break;
 
-      case ENUM_PEN_TYPES.multiLine:
+      case ENUM_PEN_TYPES.multiLines:
 
         this.bindEventListener('mousedown', (e) => {
           //* 监听点击右键为终止
@@ -240,18 +290,41 @@ class Pen {
           if (this.onDraw === false) {
             // console.log('start drawing multiLine')
             this.setOnDrawToTrue();
+            this.savePreview();
             this.ctx.beginPath();
+
           }
 
           this.ctx.lineTo(e.offsetX, e.offsetY);
           this.ctx.moveTo(e.offsetX, e.offsetY);
           this.ctx.stroke();
 
+          this.savePreview();
+
+        });
+
+        //预览
+        this.bindEventListener('mousemove', (e) => {
+          if (this.onDraw === false) {
+            return
+          }
+          this.clearCanvas();
+          this.readPreview();
+
+          this.ctx.beginPath();
+          this.ctx.moveTo(this.downX, this.downY);
+
+          this.ctx.lineTo(e.offsetX, e.offsetY);
+          this.ctx.moveTo(e.offsetX, e.offsetY);
+          this.ctx.stroke();
         });
 
         break;
 
       default:
+        if (!Object.values(ENUM_PEN_TYPES).includes(this.penType)) {
+          throw new Error('未知的画笔类型！');
+        }
         break;
     }
   }
@@ -284,6 +357,16 @@ class Pen {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
+  clearStack() {
+    this.stack.length = 0;
+  }
+
+  savePreview() {
+    this.beforePreview = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+  }
+  readPreview() {
+    this.ctx.putImageData(this.beforePreview, 0, 0);
+  }
 
 
 

@@ -12,7 +12,7 @@ class Canvas extends Component {
    * 
    * @param {Pen} pen - util中的画笔的实例对象
    */
-  constructor({ pen }) {
+  constructor({ pen, width, height }) {
     super();
     // 创建一个 ref 来存储 canvas 的 DOM 元素
     this.canvas = React.createRef();
@@ -21,8 +21,8 @@ class Canvas extends Component {
 
     this.pen = pen;
 
-    this.width = 666;
-    this.height = 999;
+    this.width = width || 750;
+    this.height = height || 750;
 
 
   }
