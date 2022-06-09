@@ -99,12 +99,11 @@ class Pen {
 
     for (let touchEvent in touchToMouse) {
 
-
       canvasObj.addEventListener(touchEvent, (e) => {
-        e.preventDefault();
         if (e.touches.length !== 1) {
           return
         }
+        e.preventDefault();
 
         let touch = e.touches[0];
         if (!touch) {
@@ -170,6 +169,7 @@ class Pen {
             return
           }
 
+          this.readPreview();
           this.setOnDrawToFalse();
 
           this.ctx.beginPath();
@@ -187,7 +187,7 @@ class Pen {
             return
           }
           this.clearCanvas();
-          console.log('cleared!')
+          // console.log('cleared!')
           this.readPreview();
 
           this.ctx.beginPath();
@@ -243,7 +243,9 @@ class Pen {
             return
           }
 
+          this.readPreview();
           this.setOnDrawToFalse();
+
           this.ctx.strokeRect(e.offsetX, e.offsetY, this.downX - e.offsetX, this.downY - e.offsetY);
 
           this.stack.push(this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height));
@@ -276,7 +278,7 @@ class Pen {
           if (this.onDraw === false) {
             return
           }
-
+          this.readPreview();
           this.setOnDrawToFalse();
 
           let centerX = (e.offsetX + this.downX) / 2
@@ -311,6 +313,7 @@ class Pen {
           //* 监听点击右键为终止
           if (e.button === 2 && this.onDraw === true) {
             // console.log('stop drawing multiLine')
+            this.readPreview();
             this.setOnDrawToFalse();
             this.stack.push(this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height));
             return;
@@ -323,6 +326,7 @@ class Pen {
             this.ctx.beginPath();
 
           }
+          this.readPreview()
 
           this.ctx.lineTo(e.offsetX, e.offsetY);
           this.ctx.moveTo(e.offsetX, e.offsetY);
