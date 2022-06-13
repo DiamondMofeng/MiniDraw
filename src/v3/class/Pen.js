@@ -22,6 +22,7 @@ class Pen {
     this.canvas = undefined;  //canvas Dom对象
 
     this.stack = [];//画笔记录栈
+    this.setStack = function (newStack) { this.stack = newStack };  //接受react设置栈的方法
 
     this.onDraw = false;
 
@@ -39,6 +40,10 @@ class Pen {
       mouseup: undefined,
       mousemove: undefined,
     }
+
+
+
+
 
   }
 
@@ -133,6 +138,13 @@ class Pen {
 
   }
 
+  bindStack(stack, setStack) {
+    // this.stack = stack;
+    this.setStack = setStack;
+    console.log('bindStack')
+  }
+
+
   /**
    * 改变画笔的类型。 
    * 思路：
@@ -188,7 +200,7 @@ class Pen {
           let [x1, y1] = cssXYtoWebGLXY(this.downX, this.downY, this.canvas.width, this.canvas.height);
           let [x2, y2] = cssXYtoWebGLXY(this.upX, this.upY, this.canvas.width, this.canvas.height);
 
-          this.stack.push(new Line(x1, y1, x2, y2));
+          this.addToStack(new Line(x1, y1, x2, y2));
 
           this.renderAll();
 
@@ -244,7 +256,7 @@ class Pen {
           let [x, y] = cssXYtoWebGLXY(this.upX, this.upY, this.canvas.width, this.canvas.height);
           this.tempPoints.push(x, y);
 
-          this.stack.push(new Free(this.tempPoints));
+          this.addToStack(new Free(this.tempPoints));
           this.tempPoints = undefined;
 
           this.clearCanvas();
@@ -272,8 +284,7 @@ class Pen {
           let [x1, y1] = cssXYtoWebGLXY(this.downX, this.downY, this.canvas.width, this.canvas.height);
           let [x2, y2] = cssXYtoWebGLXY(this.upX, this.upY, this.canvas.width, this.canvas.height);
 
-          // this.stack.push(new Rect(x1, y1, x2, y2));
-          this.stack = this.stack.concat(new Rect(x1, y1, x2, y2));
+          this.addToStack(new Rect(x1, y1, x2, y2));
 
           this.renderAll();
           // console.log(this.stack)
@@ -315,7 +326,7 @@ class Pen {
           let [x1, y1] = cssXYtoWebGLXY(this.downX, this.downY, this.canvas.width, this.canvas.height);
           let [x2, y2] = cssXYtoWebGLXY(this.upX, this.upY, this.canvas.width, this.canvas.height);
 
-          this.stack.push(new Circle(x1, y1, x2, y2));
+          this.addToStack(new Circle(x1, y1, x2, y2));
           // console.log(this.stack)
         });
 
@@ -345,7 +356,7 @@ class Pen {
             // console.log('stop drawing multiLine')
             this.setOnDrawToFalse();
 
-            this.stack.push(new MultiLines(this.tempPoints));
+            this.addToStack(new MultiLines(this.tempPoints));
             this.tempPoints = undefined;
 
             this.clearCanvas();
@@ -411,7 +422,11 @@ class Pen {
       return
     }
     this.clearCanvas();
-    this.stack.pop();
+
+    let newStack = this.stack.slice(0, this.stack.length - 1);
+    this.stack = newStack;
+    this.setStack(newStack);
+
     this.renderAll();
   }
 
@@ -421,7 +436,8 @@ class Pen {
   }
 
   clearStack() {
-    this.stack.length = 0;
+    this.stack = [];
+    this.setStack([]);
   }
 
   removeAt(index) {
@@ -429,7 +445,28 @@ class Pen {
       return
     }
     this.clearCanvas();
-    this.stack.splice(index, 1);
+    let newStack = this.stack.filter((item, i) => i !== index)
+    this.stack = newStack;
+    this.setStack(newStack);
+    this.renderAll();
+  }
+
+  addToStack(figure) {
+    let newStack = this.stack.concat(figure);
+    this.stack = newStack;
+    this.setStack(newStack);
+  }
+
+  setHidden(index) {
+    let newStack = this.stack.map((item, i) => {
+      if (i === index) {
+        item.hidden = !item.hidden;
+      }
+      return item;
+    })
+
+    this.stack = newStack;
+    this.setStack(newStack);
     this.renderAll();
   }
 

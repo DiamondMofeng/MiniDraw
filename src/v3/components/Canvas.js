@@ -11,19 +11,19 @@ class Canvas extends Component {
    * 
    * @param {Pen} pen - util中的画笔的实例对象
    */
-  constructor({ pen, width, height }) {
+  constructor({ pen, stack, setStack, width, height }) {
     super();
     // 创建一个 ref 来存储 canvas 的 DOM 元素
     this.canvas = React.createRef();
 
-    this.stack = [];
+    this.stack = stack;
+    this.setStack = setStack;
 
     this.pen = pen;
 
     this.width = width || 750;
     this.height = height || 750;
   }
-  ww
   render() {
     return (
       <canvas ref={this.canvas} width={this.width} height={this.height} style={style} tabIndex="0">
@@ -32,7 +32,6 @@ class Canvas extends Component {
     )
   }
   componentDidMount() {
-
     //禁用浏览器右键菜单，方便后续操作
     window.oncontextmenu = (e) => {
       e.preventDefault();
@@ -69,10 +68,24 @@ class Canvas extends Component {
 
     //绑定pen与画布（向画布中注入pen的鼠标事件）
     this.pen.injectEvent(canvas, var_a_Position);
+    // this.pen.bindStack(this.stack, this.setStack);;
 
     // new Line(0.5, 0.5, 1, 1).draw(gl, var_a_Position);//test
 
   }
+  // componentDidUpdate(){
+  //   this.pen.renderAll();
+  // }
+
+
+
+
+
+
+
+
+
+
 }
 
 
