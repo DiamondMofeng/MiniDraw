@@ -41,19 +41,22 @@ class Canvas extends Component {
     const canvas = this.canvas.current;
 
     //初始化webgl
+    // const gl: WebGLRenderingContext = canvas.getContext("webgl");  //用于智能补全
     const gl = canvas.getContext("webgl");
     if (!gl) {
       throw new Error("WebGL not supported");
     }
 
     const var_a_Position = 'a_Position';
+    const var_a_PointSize = 'a_PointSize';
 
     const glsl = String.raw;
     const vertexShader = glsl`
       attribute vec4 ${var_a_Position};
+      attribute float ${var_a_PointSize};
       void main() {
         gl_Position = ${var_a_Position};
-        gl_PointSize = 5.0;
+        gl_PointSize = ${var_a_PointSize};
       }
     `;
     const fragmentShader = glsl`
@@ -66,16 +69,15 @@ class Canvas extends Component {
     `;
     initShaders(gl, vertexShader, fragmentShader);
 
+    const a_PointSize = gl.getAttribLocation(gl.program, var_a_PointSize);
+    gl.vertexAttrib1f(a_PointSize, 100.0);
+
     //绑定pen与画布（向画布中注入pen的鼠标事件）
     this.pen.injectEvent(canvas, var_a_Position);
-    // this.pen.bindStack(this.stack, this.setStack);;
 
     // new Line(0.5, 0.5, 1, 1).draw(gl, var_a_Position);//test
 
   }
-  // componentDidUpdate(){
-  //   this.pen.renderAll();
-  // }
 
 
 
