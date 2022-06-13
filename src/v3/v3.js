@@ -1,6 +1,7 @@
 import Canvas from './components/Canvas';
 import Pen from './class/Pen';
 import Buttons from './components/Buttons';
+import History from './components/History';
 
 
 
@@ -19,6 +20,7 @@ function V3() {
       </p>
       <Buttons pen={pen} />
       <Canvas pen={pen} width={900} height={600} />
+      <History pen={pen} stack={pen.stack} />
       <p>Copyright ©2021-2022 Mofeng. All Rights Reserved.
       </p>
       <p>

@@ -272,7 +272,8 @@ class Pen {
           let [x1, y1] = cssXYtoWebGLXY(this.downX, this.downY, this.canvas.width, this.canvas.height);
           let [x2, y2] = cssXYtoWebGLXY(this.upX, this.upY, this.canvas.width, this.canvas.height);
 
-          this.stack.push(new Rect(x1, y1, x2, y2));
+          // this.stack.push(new Rect(x1, y1, x2, y2));
+          this.stack = this.stack.concat(new Rect(x1, y1, x2, y2));
 
           this.renderAll();
           // console.log(this.stack)
@@ -414,6 +415,7 @@ class Pen {
     this.renderAll();
   }
 
+
   clearCanvas() {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
   }
@@ -422,10 +424,21 @@ class Pen {
     this.stack.length = 0;
   }
 
+  removeAt(index) {
+    if (this.stack.length === 0) {
+      return
+    }
+    this.clearCanvas();
+    this.stack.splice(index, 1);
+    this.renderAll();
+  }
+
   renderAll() {
     this.clearCanvas();
     this.stack.forEach((figure) => {
-      figure.draw(this.gl, this.attributeName)
+      if (!figure.hidden) {
+        figure.draw(this.gl, this.attributeName)
+      }
     }
     )
   }
