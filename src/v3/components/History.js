@@ -14,6 +14,31 @@ const History = ({ pen }) => {
     }
   })
 
+  // const [isShowEdit, setIsShowEdit] = useState([]);
+
+  // const EditBox = (x1, y1, x2, y2) => {
+  //   return (
+  //     <div style={{
+  //       position: "absolute",
+  //       top: "0px",
+  //       left: "0px",
+  //     }}>
+  //       x1:<input type="text" value={x1} onChange={({ target }) => setAuthor(target.value)} />
+  //       y1:<input type="text" value={y1} />
+  //       x2:<input type="text" value={x2} />
+  //       y2:<input type="text" value={y2} />
+
+  //     </div>)
+  // }
+
+
+
+
+
+  // useEffect(() => {
+  //   if(isShowEdit)
+  // }, [stack])
+
   const style_history = {
     display: "flex",
     flexDirection: "column",
@@ -32,6 +57,7 @@ const History = ({ pen }) => {
 
   return (
     <>
+
       <div style={style_history}>
         {
           stack.map((item, index) => {
