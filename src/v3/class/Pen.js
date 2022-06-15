@@ -445,13 +445,23 @@ class Pen {
       return
     }
     this.clearCanvas();
-    let newStack = this.stack.filter((item, i) => i !== index)
+    let newStack = this.stack.filter((item, i) => item.index !== index)
     this.stack = newStack;
     this.setStack(newStack);
     this.renderAll();
   }
 
   addToStack(figure) {
+
+    if (!figure.index) {
+      if (this.stack.length === 0) {
+        figure.index = 0;
+      }
+      else {
+        figure.index = this.stack[this.stack.length - 1].index + 1;
+      }
+    }
+
     let newStack = this.stack.concat(figure);
     this.stack = newStack;
     this.setStack(newStack);
@@ -459,7 +469,7 @@ class Pen {
 
   setHidden(index) {
     let newStack = this.stack.map((item, i) => {
-      if (i === index) {
+      if (item.index === index) {
         item.hidden = !item.hidden;
       }
       return item;
