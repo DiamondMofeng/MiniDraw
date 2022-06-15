@@ -12,12 +12,12 @@ class HistoryList extends Component {
       stack: []
     }
 
-    this.style_history = {
+    this.style_historyList = {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       // justifyContent: "center",
-      width: "10%",
+      width: "15%",
       height: "100%",
       backgroundColor: "rgba(0,0,0,0.2)",
       position: "absolute",
@@ -43,7 +43,7 @@ class HistoryList extends Component {
     return (
       <>
 
-        <div style={this.style_history}>
+        <div style={this.style_historyList}>
           {
             this.state.stack.map(
               (item, index) => <History pen={this.pen} figure={item} index={index} />

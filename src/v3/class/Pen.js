@@ -480,6 +480,22 @@ class Pen {
     this.renderAll();
   }
 
+  editAt(index, x1, y1, x2, y2) {
+    let newStack = this.stack.map((item, i) => {
+      if (item.index === index) {
+        item.x1 = x1;
+        item.y1 = y1;
+        item.x2 = x2;
+        item.y2 = y2;
+      }
+      return item;
+    })
+
+    this.stack = newStack;
+    this.setStack(newStack);
+    this.renderAll();
+  }
+
   renderAll() {
     this.clearCanvas();
     this.stack.forEach((figure) => {
