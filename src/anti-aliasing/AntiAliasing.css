@@ -1,0 +1,11 @@
+@import '~antd/dist/antd.css';
+
+.Bars {
+  width: 50%;
+  height: 50%;
+  /* background-color: #fff; */
+  position: relative;
+  /* top: 25%; */
+  left: 25%;
+  /* z-index: -1; */
+}

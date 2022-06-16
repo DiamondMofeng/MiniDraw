@@ -79,10 +79,8 @@ const History = ({ pen, figure, index }) => {
         [
           ENUM_PEN_TYPES.line,
           ENUM_PEN_TYPES.rect,
-          // ENUM_PEN_TYPES.circle,
-          // ENUM_PEN_TYPES.multiLines,
-        ].includes(item.type) ?
-          <EditBox />
+        ].includes(item.type)
+          ? <EditBox />
           : null
       }
 

@@ -99,19 +99,41 @@ export function loadShader(gl, type, source) {
  * @param {*} points 
  * @param {*} attributeName 
  */
-export function pointsIntoAttribute(gl, points, attributeName) {
+export function pointsIntoAttributeByAttributeName(gl, points, attributeName) {
 
   if (points instanceof Float32Array === false) {
     points = new Float32Array(points);
   }
   // console.log('points: ', points);
 
-  let vertexBuffer = gl.createBuffer();
+  const vertexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
   //把点数据传给attribute变量
-  let a_Position = gl.getAttribLocation(gl.program, attributeName);
-  // console.log('a_Position: ', a_Position);
+  const a_Position = gl.getAttribLocation(gl.program, attributeName);
+  gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(a_Position);
+
+}
+
+/**
+ * 
+ * @param {WebGLRenderingContext} gl 
+ * @param {*} points 
+ * @param {*} attributeName 
+ */
+export function pointsIntoAttributeByLocation(gl, points, attributeLocation) {
+
+  if (points instanceof Float32Array === false) {
+    points = new Float32Array(points);
+  }
+  // console.log('points: ', points);
+
+  const vertexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
+  //把点数据传给attribute变量
+  const a_Position = attributeLocation
   gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(a_Position);
 
@@ -128,7 +150,7 @@ export function pointsIntoAttribute(gl, points, attributeName) {
 export function drawLineLoop(gl, points, attributeName) {
   let n = points.length / 2;
 
-  pointsIntoAttribute(gl, points, attributeName);
+  pointsIntoAttributeByLocation(gl, points, attributeName);
 
   gl.drawArrays(gl.LINE_LOOP, 0, n);
 }
@@ -143,7 +165,7 @@ export function drawLineLoop(gl, points, attributeName) {
 export function drawLines(gl, points, attributeName) {
   let n = points.length / 2;
 
-  pointsIntoAttribute(gl, points, attributeName);
+  pointsIntoAttributeByLocation(gl, points, attributeName);
 
   gl.drawArrays(gl.LINES, 0, n);
 }
@@ -154,10 +176,10 @@ export function drawLines(gl, points, attributeName) {
  * @param {*} points 
  * @param {*} attributeName 
  */
- export function drawLineStrip(gl, points, attributeName) {
+export function drawLineStrip(gl, points, attributeName) {
   let n = points.length / 2;
 
-  pointsIntoAttribute(gl, points, attributeName);
+  pointsIntoAttributeByLocation(gl, points, attributeName);
 
   gl.drawArrays(gl.LINE_STRIP, 0, n);
 }
