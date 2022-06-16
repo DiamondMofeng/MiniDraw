@@ -23,8 +23,8 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build"
   },
-  "//homepage": "https://diamondmofeng.github.io/MiniDraw/",
-  "homepage": ".",
+  "homepage": "https://diamondmofeng.github.io/MiniDraw/",
+  "//homepage": ".",
   "eslintConfig": {
     "extends": [
       "react-app",

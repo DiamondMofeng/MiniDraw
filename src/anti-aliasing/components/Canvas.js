@@ -6,12 +6,13 @@ export default class Canvas extends React.Component {
   constructor(props) {
     super(props);
 
-    const { x1, y1, x2, y2, pointSize } = props;
+    const { x1, y1, x2, y2, pointSize, pointFreq } = props;
     this.x1 = x1;
     this.y1 = y1;
     this.x2 = x2;
     this.y2 = y2;
     this.pointSize = pointSize;
+    this.pointFreq = pointFreq;
 
     this.canvas = React.createRef();
     this.canvasObj = undefined;
@@ -163,8 +164,8 @@ export default class Canvas extends React.Component {
 
       e = e + 2 * dy;
       if (e > 0) {
-        x = x + pointSize * 4;
-        y = y + pointSize * 4;
+        x = x + pointSize * this.props.pointFreq;
+        y = y + pointSize * this.props.pointFreq;
         e = e - 2 * dx;
       }
       else {
