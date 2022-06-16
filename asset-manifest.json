@@ -1,10 +1,13 @@
 {
   "files": {
-    "main.js": "/MiniDraw/static/js/main.a7df3dc7.js",
+    "main.css": "/MiniDraw/static/css/main.fb7521ba.css",
+    "main.js": "/MiniDraw/static/js/main.b57da998.js",
     "index.html": "/MiniDraw/index.html",
-    "main.a7df3dc7.js.map": "/MiniDraw/static/js/main.a7df3dc7.js.map"
+    "main.fb7521ba.css.map": "/MiniDraw/static/css/main.fb7521ba.css.map",
+    "main.b57da998.js.map": "/MiniDraw/static/js/main.b57da998.js.map"
   },
   "entrypoints": [
-    "static/js/main.a7df3dc7.js"
+    "static/css/main.fb7521ba.css",
+    "static/js/main.b57da998.js"
   ]
 }
