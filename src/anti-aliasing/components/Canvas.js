@@ -169,7 +169,7 @@ export default class Canvas extends React.Component {
         e = e - 2 * dx;
       }
       else {
-        x = x + pointSize;
+        x = x + pointSize * this.props.pointFreq;
       }
 
     }
