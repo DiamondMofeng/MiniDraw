@@ -106,7 +106,7 @@ class Circle extends DrawObj {
   }
 }
 
-// 测试产物
+// 旧版，已废弃
 class Circle2 extends DrawObj {
   /**
    * 
