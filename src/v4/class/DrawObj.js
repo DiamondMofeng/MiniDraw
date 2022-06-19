@@ -22,10 +22,10 @@ class DrawObj {
 class Line extends DrawObj {
   constructor(x1, y1, x2, y2) {
     super(ENUM_PEN_TYPES.line);
-    this.x1 = x1.toFixed(2);
-    this.y1 = y1.toFixed(2);
-    this.x2 = x2.toFixed(2);
-    this.y2 = y2.toFixed(2);
+    this.x1 = x1
+    this.y1 = y1
+    this.x2 = x2
+    this.y2 = y2
   }
 
   /**
@@ -45,10 +45,10 @@ class Line extends DrawObj {
 class Rect extends DrawObj {
   constructor(x1, y1, x2, y2) {
     super(ENUM_PEN_TYPES.rect);
-    this.x1 = x1.toFixed(2);
-    this.y1 = y1.toFixed(2);
-    this.x2 = x2.toFixed(2);
-    this.y2 = y2.toFixed(2);
+    this.x1 = x1
+    this.y1 = y1
+    this.x2 = x2
+    this.y2 = y2
   }
 
   /**

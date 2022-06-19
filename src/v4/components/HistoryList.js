@@ -19,7 +19,7 @@ class HistoryList extends Component {
       // justifyContent: "center",
       width: "15%",
       height: "100%",
-      backgroundColor: "rgba(0,0,0,0.2)",
+      // backgroundColor: "rgba(0,0,0,0.2)",
       position: "absolute",
       top: 0,
       left: 0,
@@ -46,7 +46,7 @@ class HistoryList extends Component {
         <div style={this.style_historyList}>
           {
             this.state.stack.map(
-              (item, index) => <History pen={this.pen} figure={item} index={index} />
+              (item, index) => <History pen={this.pen} figure={item} index={index} key={index} />
             )
           }
         </div>

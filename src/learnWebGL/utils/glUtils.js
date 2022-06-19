@@ -162,7 +162,7 @@ export function drawLineLoop(gl, points, attributeName) {
  * @param {*} points 
  * @param {*} attributeName 
  */
-export function drawLines(gl, points, attributeName) {
+export function drawLines(gl, points, attributeName, uniformName = undefined) {
   let n = points.length / 2;
 
   pointsIntoAttributeByLocation(gl, points, attributeName);
@@ -176,12 +176,23 @@ export function drawLines(gl, points, attributeName) {
  * @param {*} points 
  * @param {*} attributeName 
  */
-export function drawLineStrip(gl, points, attributeName) {
+export function drawLineStrip(gl, points, attributeName, uniformName = undefined) {
   let n = points.length / 2;
 
   pointsIntoAttributeByLocation(gl, points, attributeName);
 
   gl.drawArrays(gl.LINE_STRIP, 0, n);
+}
+
+
+/**
+ * 
+ * @param {WebGLRenderingContext} gl 
+ * @param {String} uniformName 
+ * @param {Float32Array} color 
+ */
+export function setColor(gl, uniformName, color) {
+  gl.uniform4fv(gl.getUniformLocation(gl.program, uniformName), color);
 }
 
 

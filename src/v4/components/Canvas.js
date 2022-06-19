@@ -64,10 +64,12 @@ class Canvas extends Component {
       precision mediump float;
       uniform vec4 u_FragColor ;
       void main() {
-        gl_FragColor = vec4(0.0,0.0,0.0,1.0);
+        // gl_FragColor = vec4(0.0,0.0,0.0,1.0);
+        gl_FragColor = u_FragColor;
       }
     `;
     initShaders(gl, vertexShader, fragmentShader);
+    gl.uniform4fv(gl.getUniformLocation(gl.program, 'u_FragColor'), new Float32Array([0.0, 0.0, 0.0, 1.0]));
 
     const a_PointSize = gl.getAttribLocation(gl.program, var_a_PointSize);
     gl.vertexAttrib1f(a_PointSize, 100.0);
