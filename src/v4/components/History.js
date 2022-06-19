@@ -3,7 +3,7 @@ import { setColor } from "../../learnWebGL/utils/glUtils";
 import ENUM_PEN_TYPES from "../types/penTypes"
 import EditBox from "./EditBox";
 import './History.css'
-import Transform from "./Transform";
+import TransformBox from "./TransformBox";
 
 const History = ({ pen, figure, index }) => {
 
@@ -16,7 +16,7 @@ const History = ({ pen, figure, index }) => {
 
     setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.5, 1.0, 1.0]))
     figure.draw(pen.gl, 'a_Position');
-    console.log(figure)
+    // console.log(figure)
 
     setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.0, 0.0, 1.0]))
   }
@@ -88,7 +88,7 @@ const History = ({ pen, figure, index }) => {
           : null
       }
 
-      <Transform pen={pen} figure={_figure} index={index} />
+      <TransformBox pen={pen} figure={_figure} index={index} />
 
     </div>
   )

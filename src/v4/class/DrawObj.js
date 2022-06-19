@@ -16,6 +16,13 @@ class DrawObj {
    * @param {WebGLRenderingContext} gl 
    */
   draw(gl, attributeName) { }
+  
+  clone() {
+    let clone = new this.constructor()
+    Object.assign(clone, this)
+    return clone
+  }
+
 }
 
 class Line extends DrawObj {

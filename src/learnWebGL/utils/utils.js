@@ -1,3 +1,4 @@
+import { Matrix3 } from "three";
 
 /**
  * 输入offsetXY和画布的宽高来得到WebGL的坐标
@@ -36,5 +37,55 @@ export function mapXYtoWebGLXY(x, y, width, height) {
   return [x / width / 2, y / height / 2];
 
 }
+
+/**
+ * 
+ * @param {Number} x 
+ * @param {Number} y 
+ * @param {Matrix3|Number[]} matrix 
+ */
+export function transformXY(x, y, matrix) {
+  let m;
+  if (matrix instanceof Matrix3) {
+    m = matrix;
+  }
+  else if (matrix instanceof Array || matrix instanceof Float32Array) {
+    m = new Matrix3();
+    m.set(...matrix);
+  }
+  else {
+    throw new Error('matrix type error');
+  }
+
+  let _x = x;
+  let _y = y;
+  let _z = 1;
+
+  let _x2 = m.elements[0] * _x + m.elements[1] * _y + m.elements[2] * _z;
+  let _y2 = m.elements[3] * _x + m.elements[4] * _y + m.elements[5] * _z;
+  // let _z2 = m.elements[6] * _x + m.elements[7] * _y + m.elements[8] * _z;
+
+  return [_x2, _y2];
+
+}
+
+
+/**
+ * 
+ * @param {DrawObj} figure 
+ * @param {Matrix3} matrix 
+ */
+export function transformFigure2D(figure, matrix) {
+
+  let newPoints = [];
+  for (let i = 0; i < figure.points.length; i += 2) {
+    let [_x, _y] = figure.points.slice(i, i + 2);
+    let [x, y] = transformXY(_x, _y, matrix);
+    newPoints.push(x, y);
+  }
+  figure.points = new Float32Array(newPoints);
+  return figure;
+}
+
 
 

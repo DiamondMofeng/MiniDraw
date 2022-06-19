@@ -1,4 +1,4 @@
-import { cssXYtoWebGLXY } from "../../learnWebGL/utils/utils.js";
+import { cssXYtoWebGLXY, transformXY } from "../../learnWebGL/utils/utils.js";
 import ENUM_PEN_TYPES from "../types/penTypes.js";
 import { Circle, Free, Line, MultiLines, Rect } from "./DrawObj.js";
 
@@ -506,7 +506,41 @@ class Pen {
     )
   }
 
+  applyTransformAt(index, transform) {
 
+    let figure = this.stack.find(item => item.index === index);
+    if (!figure) {
+      console.log('没有找到位于该index的图形进行变换!');
+      return
+    }
+
+    let oldPoints = figure.points;
+    // if (oldPoints instanceof Float32Array) {
+    //   oldPoints = oldPoints.slice();
+    // }
+
+    let newPoints = []
+
+    for (let i = 0; i < oldPoints.length; i += 2) {
+      let [x, y] = oldPoints.slice(i, i + 2);
+
+      let [newX, newY] = transformXY(x, y, transform);
+      newPoints.push(newX, newY);
+    }
+
+    newPoints = new Float32Array(newPoints);
+
+    let newStack = this.stack.map((item, i) => {
+      if (item.index === index) {
+        item.points = newPoints;
+      }
+      return item;
+    })
+
+    this.stack = newStack;
+    this.setStack(newStack);
+    this.renderAll();
+  }
 
 
 }
