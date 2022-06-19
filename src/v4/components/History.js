@@ -9,25 +9,29 @@ const History = ({ pen, figure, index }) => {
   const historyRef = useRef(null);
   // console.log(historyRef)
 
+  const handleMouseEnter = () => {
+    setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.0, 0.0, 1.0]))
+    pen.renderAll();
+
+    setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.5, 1.0, 1.0]))
+    figure.draw(pen.gl, 'a_Position');
+    console.log(figure)
+
+    setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.0, 0.0, 1.0]))
+  }
+
+  const handleMouseLeave = () => {
+    setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.0, 0.0, 1.0]))
+    pen.renderAll();
+  }
+
+
   //挂载后，监听鼠标悬浮事件
   useEffect(() => {
     // componentDidMount
     const historyDiv = historyRef.current;
-    historyDiv.addEventListener("mouseenter", () => {
-      // console.log("mouseenter", figure)
-      setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.0, 0.0, 1.0]))
-      pen.renderAll();
-
-      setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.5, 1.0, 1.0]))
-      figure.draw(pen.gl, 'a_Position');
-
-      setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.0, 0.0, 1.0]))
-    });
-
-    historyDiv.addEventListener("mouseleave", () => {
-      setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.0, 0.0, 1.0]))
-      pen.renderAll();
-    });
+    historyDiv.addEventListener("mouseenter", handleMouseEnter);
+    historyDiv.addEventListener("mouseleave", handleMouseLeave);
 
 
     //用于componentDidUnmount
@@ -36,6 +40,13 @@ const History = ({ pen, figure, index }) => {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    // componentDidUpdate
+    const historyDiv = historyRef.current;
+    historyDiv.addEventListener("mouseenter", handleMouseEnter);
+    historyDiv.addEventListener("mouseleave", handleMouseLeave);
+  })
 
 
   const EditBox = () => {
@@ -77,10 +88,10 @@ const History = ({ pen, figure, index }) => {
         <div>
           <button onClick={onEditClick}>编辑</button>
 
-          <p>x1<Slider type="number" step={0.01} max={1} min={-1} value={x1} onChange={setX1} /></p>
-          <p>y1<Slider type="number" step={0.01} max={1} min={-1} value={y1} onChange={setY1} /></p>
-          <p>x2<Slider type="number" step={0.01} max={1} min={-1} value={x2} onChange={setX2} /></p>
-          <p>y2<Slider type="number" step={0.01} max={1} min={-1} value={y2} onChange={setY2} /></p>
+          <li>x1<Slider type="number" step={0.01} max={1} min={-1} value={x1} onChange={setX1} /></li>
+          <li>y1<Slider type="number" step={0.01} max={1} min={-1} value={y1} onChange={setY1} /></li>
+          <li>x2<Slider type="number" step={0.01} max={1} min={-1} value={x2} onChange={setX2} /></li>
+          <li>y2<Slider type="number" step={0.01} max={1} min={-1} value={y2} onChange={setY2} /></li>
           <button onClick={onEditConfirm}>确认</button>
           <button onClick={onEditCancel}>取消</button>
         </div>
