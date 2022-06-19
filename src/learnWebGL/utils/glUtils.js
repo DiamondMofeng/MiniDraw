@@ -156,6 +156,8 @@ export function drawLineLoop(gl, points, attributeName) {
 }
 
 
+
+
 /**
  * 
  * @param {WebGLRenderingContext} gl 
@@ -182,6 +184,22 @@ export function drawLineStrip(gl, points, attributeName, uniformName = undefined
   pointsIntoAttributeByLocation(gl, points, attributeName);
 
   gl.drawArrays(gl.LINE_STRIP, 0, n);
+}
+
+
+/**
+ * 
+ * @param {WebGLRenderingContext} gl 
+ * @param {GLenum} mode 
+ * @param {*} points 
+ * @param {*} attributeName 
+ */
+export function drawByMode(gl, mode, points, attributeName) {
+  let n = points.length / 2;
+
+  pointsIntoAttributeByLocation(gl, points, attributeName);
+
+  gl.drawArrays(mode, 0, n);
 }
 
 

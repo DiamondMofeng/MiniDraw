@@ -1,4 +1,4 @@
-import { drawLines, drawLineLoop, drawLineStrip } from "../../learnWebGL/utils/glUtils";
+import { drawLines, drawLineLoop, drawLineStrip, drawByMode } from "../../learnWebGL/utils/glUtils";
 import ENUM_PEN_TYPES from "../types/penTypes";
 
 
@@ -16,7 +16,7 @@ class DrawObj {
    * @param {WebGLRenderingContext} gl 
    */
   draw(gl, attributeName) { }
-  
+
   clone() {
     let clone = new this.constructor()
     Object.assign(clone, this)
@@ -24,6 +24,19 @@ class DrawObj {
   }
 
 }
+
+class SinglePoint extends DrawObj {
+  constructor(x, y) {
+    super("singlePoint");
+    this.x = x
+    this.y = y
+  }
+  draw(gl, attributeName) {
+    this.points = new Float32Array([this.x, this.y])
+    drawByMode(gl, gl.Points, this.points, attributeName);
+  }
+}
+
 
 class Line extends DrawObj {
   constructor(x1, y1, x2, y2) {
@@ -250,4 +263,4 @@ class Free extends DrawObj {
   }
 }
 
-export { DrawObj, Line, Rect, Circle, Circle2, MultiLines, Free };
+export { DrawObj, Line, Rect, Circle, Circle2, MultiLines, Free, SinglePoint };

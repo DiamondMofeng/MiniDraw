@@ -87,5 +87,13 @@ export function transformFigure2D(figure, matrix) {
   return figure;
 }
 
-
-
+/**
+ * 
+ * @param {Matrix3} m 
+ * @param {*} offsetX 
+ * @param {*} offsetY 
+ */
+export function doOffset(m, offsetX, offsetY) {
+  m.elements[2] += offsetX;
+  m.elements[5] += offsetY;
+}

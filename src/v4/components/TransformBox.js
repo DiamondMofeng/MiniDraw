@@ -1,8 +1,10 @@
 import { InputNumber, Slider, Switch } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Matrix3 } from "three";
 import { setColor } from "../../learnWebGL/utils/glUtils";
-import { transformFigure2D } from "../../learnWebGL/utils/utils";
+import { doOffset, transformFigure2D } from "../../learnWebGL/utils/utils";
+import { Line } from "../class/DrawObj";
+import SliderWithInput from "./SliderWithInput";
 
 
 /**
@@ -17,15 +19,21 @@ const TransformBox = ({ pen, figure, index }) => {
   const [onTransform, setOnTransform] = useState(false);
 
   const [m3, setM3] = useState(new Matrix3());
+  const [m3_preview, setM3_preview] = useState(new Matrix3());
 
-  useEffect(() => {
+  const transformRef = useRef(null);
+
+
+  // const [previewFigure, setPreviewFigure] = useState(null);
+
+  const [showBasePoint, setShowBasePoint] = useState(false);
+
+  const preview = (m) => {
     if (!onTransform) {
       return;
     }
-    let f = transformFigure2D(figure.clone(), m3)
-    // console.log('f: ', f);
-    // console.log(f, figure)
-    // console.log(f === figure)
+
+    let f = transformFigure2D(figure.clone(), m)
 
     setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.0, 0.0, 1.0]));
     pen.renderAll();
@@ -33,14 +41,44 @@ const TransformBox = ({ pen, figure, index }) => {
     setColor(pen.gl, 'u_FragColor', new Float32Array([1.0, 0.0, 0.0, 1.0]));
     f.draw(pen.gl, 'a_Position');
 
+    //绘制原点
+    
+    if (showBasePoint) {
+      new Line(baseX - 0.05, baseY, baseX + 0.05, baseY).draw(pen.gl, 'a_Position');
+      new Line(baseX, baseY - 0.05, baseX, baseY + 0.05).draw(pen.gl, 'a_Position');
+    }
+    
     setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.0, 0.0, 1.0]));
+  }
 
-  }, [m3, figure, pen, onTransform])
+
+
+
+
+  useEffect(() => {
+    const transformComponent = transformRef.current;
+    if (!transformComponent) {
+      return;
+    }
+    transformComponent.addEventListener('onmouseover', (e) => {
+      preview(m3_preview);
+    });
+
+  })
+
+
+  useEffect(() => {
+    if (!onTransform) {
+      return;
+    }
+    preview(m3_preview);
+
+  })
 
 
   // 基于这个点进行变换
-  // const [baseX, setbaseX] = useState(0);
-  // const [baseY, setbaseY] = useState(0);
+  const [baseX, setBaseX] = useState(0);
+  const [baseY, setBaseY] = useState(0);
 
   //平移变换
   const [offsetX, setOffsetX] = useState(0);
@@ -54,6 +92,8 @@ const TransformBox = ({ pen, figure, index }) => {
       0, 1, 0,
       x, y, 1);
     setM3(_m3.multiply(m_offset));
+    setOffsetX(0);
+    setOffsetY(0);
   }
 
   //旋转变换
@@ -70,6 +110,7 @@ const TransformBox = ({ pen, figure, index }) => {
      */
     const m_rotate = new Matrix3();
     const _m3 = m3.clone()
+    doOffset(_m3, -baseX, -baseY);
 
     if (clockwise) {
       angle = 360 - angle;
@@ -82,6 +123,9 @@ const TransformBox = ({ pen, figure, index }) => {
       -Math.sin(theta), Math.cos(theta), 0,
       0, 0, 1);
     setM3(_m3.multiply(m_rotate));
+    setAngle(0);
+
+    doOffset(_m3, baseX, baseY);
 
   }
 
@@ -89,10 +133,18 @@ const TransformBox = ({ pen, figure, index }) => {
   const [scaleX, setScaleX] = useState(1);
   const [scaleY, setScaleY] = useState(1);
   const handleScale = (scaleX, scaleY) => {
-    const m_scale = new Matrix3();
+
     const _m3 = m3.clone()
+    doOffset(_m3, -baseX, -baseY);
+
+    const m_scale = new Matrix3();
     m_scale.set(scaleX, 0, 0, 0, scaleY, 0, 0, 0, 1);
     setM3(_m3.multiply(m_scale));
+    setScaleX(1);
+    setScaleY(1);
+
+    doOffset(_m3, baseX, baseY);
+
   }
 
   //自定义变换
@@ -104,28 +156,77 @@ const TransformBox = ({ pen, figure, index }) => {
     ]);
 
   const handleCustomTransform = (customMatrix) => {
-    // console.log(customMatrix);
-    // console.log(m3);
     const m_custom = new Matrix3();
     const _m3 = m3.clone();
+    doOffset(_m3, -baseX, -baseY);
+
     m_custom.set(...customMatrix);
     // m_custom.transpose();
     setM3(_m3.multiply(m_custom));
+    setCustomMatrix([
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1
+    ]);
+
+    doOffset(_m3, baseX, baseY);
+
   }
 
 
 
   //重置变换矩阵
 
-  const handleReset = () => {
+  const reset = () => {
     setM3(new Matrix3());
+    setM3_preview(new Matrix3());
+
+    setBaseX(0);
+    setBaseY(0);
+
+    setOffsetX(0);
+    setOffsetY(0);
+    setAngle(0);
+    setScaleX(1);
+    setScaleY(1);
+    setCustomMatrix([
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 1
+    ]);
+  }
+
+  const handleReset = () => {
+    reset();
   }
 
 
   //最终应用变换
   const handleApplyTransform = (index) => {
     pen.applyTransformAt(index, m3);
+
+    setOnTransform(!onTransform);
+
+    reset();
+
   }
+
+
+
+  // for (let fun of [setOffsetX, setOffsetY]) {
+  //   fun = (...args) => {
+  //     fun(...args);
+  //     let _m3=m3.clone();
+  //     _m3.setUvTransform(offsetX, offsetY);
+  //   }
+  // }
+
+  // setAngle,
+  // setClockwise
+  // setScaleX,
+  // setScaleY,
+  // setCustomMatrix,
+
 
 
   /**
@@ -177,6 +278,54 @@ const TransformBox = ({ pen, figure, index }) => {
   }
 
 
+  //* 实现预览功能
+  useEffect(() => {
+    if (!onTransform) {
+      return;
+    }
+    // console.log('do preview')
+    const _m3 = m3.clone();
+    doOffset(_m3, -baseX, -baseY);
+
+    const _CM = new Matrix3()
+    _CM.set(...customMatrix)
+
+
+    //平移
+
+    _m3.elements[2] += offsetX;
+    _m3.elements[5] += offsetY;
+
+    //旋转
+    let m_rotate = new Matrix3();
+    let _angle = angle
+    if (clockwise) {
+      _angle = 360 - angle;
+    }
+    let theta = _angle * Math.PI / 180;
+    m_rotate.set(
+      Math.cos(theta), Math.sin(theta), 0,
+      -Math.sin(theta), Math.cos(theta), 0,
+      0, 0, 1);
+    _m3.multiply(m_rotate);
+
+    //缩放
+    let m_scale = new Matrix3();
+    m_scale.set(scaleX, 0, 0, 0, scaleY, 0, 0, 0, 1);
+    _m3.multiply(m_scale);
+
+    _m3.multiply(_CM);
+
+    doOffset(_m3, baseX, baseY);
+
+    // preview(_m3);
+    setM3_preview(_m3);
+  }, [onTransform, m3, customMatrix, offsetX, offsetY, clockwise, angle, scaleX, scaleY, baseX, baseY])
+
+  // useEffect(() => {
+
+  //   setM3_preview(m3)
+  // }, [m3])
 
 
   const style_transformBlock = {
@@ -186,25 +335,37 @@ const TransformBox = ({ pen, figure, index }) => {
 
 
   return (
-    <div>
+    <div ref={transformRef}>
 
       <button onClick={() => setOnTransform(!onTransform)}>变换</button>
       {
         onTransform === false
           ? null
           : <>
+            <p>说明:分别操作下方变换方法来修改总变换矩阵,最后应用变换矩阵得到结果.每单项变换完后需要确定！</p>
             <Matrix3Visual matrix={m3} />
             <button onClick={() => handleReset()}>重置</button>
+            <button onClick={() => handleApplyTransform(index)}>应用变换</button>
+
+            <div style={style_transformBlock}>
+              <p>变换原点</p>
+              <Switch checkedChildren="显示" unCheckedChildren="隐藏"
+                onChange={() => setShowBasePoint(!showBasePoint)} checked={showBasePoint} />
+              <p />
+              x<SliderWithInput min={-1} max={1} step={0.01} value={baseX} onChange={setBaseX}></SliderWithInput>
+              y<SliderWithInput min={-1} max={1} step={0.01} value={baseY} onChange={setBaseY}></SliderWithInput>
+            </div>
+
 
             <div style={style_transformBlock}>
               <p>平移变换</p>
-              x<Slider min={-1} max={1} step={0.01} value={offsetX} onChange={setOffsetX} >x</Slider>
-              y<Slider min={-1} max={1} step={0.01} value={offsetY} onChange={setOffsetY} >y</Slider>
+              x<SliderWithInput min={-1} max={1} step={0.01} value={offsetX} onChange={setOffsetX} >x</SliderWithInput>
+              y<SliderWithInput min={-1} max={1} step={0.01} value={offsetY} onChange={setOffsetY} >y</SliderWithInput>
               <button onClick={() => handleOffset(offsetX, offsetY)}>平移变换</button>
             </div>
             <div style={style_transformBlock}>
               <p>角度变换</p>
-              <Slider min={-180} max={180} step={1} value={angle} onChange={setAngle} >旋转</Slider>
+              <SliderWithInput min={-180} max={180} step={1} value={angle} onChange={setAngle} >旋转</SliderWithInput>
               <Switch checkedChildren="顺时针" unCheckedChildren="逆时针"
                 onChange={() => setClockwise(!clockwise)} checked={clockwise} />
               <p />
@@ -212,8 +373,8 @@ const TransformBox = ({ pen, figure, index }) => {
             </div>
             <div style={style_transformBlock}>
               <p>缩放变换</p>
-              x<Slider min={0.1} max={2} step={0.01} value={scaleX} onChange={setScaleX} >x</Slider>
-              y<Slider min={0.1} max={2} step={0.01} value={scaleY} onChange={setScaleY} >y</Slider>
+              x<SliderWithInput min={0.1} max={2} step={0.01} value={scaleX} onChange={setScaleX} >x</SliderWithInput>
+              y<SliderWithInput min={0.1} max={2} step={0.01} value={scaleY} onChange={setScaleY} >y</SliderWithInput>
               <button onClick={() => handleScale(scaleX, scaleY)}>缩放变换</button>
             </div>
             <div style={style_transformBlock}>
@@ -246,7 +407,7 @@ const TransformBox = ({ pen, figure, index }) => {
             <p />
 
 
-            <button onClick={() => handleApplyTransform(index)}>应用变换</button>
+
           </>
       }
     </div>

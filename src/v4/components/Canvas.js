@@ -72,7 +72,7 @@ class Canvas extends Component {
     gl.uniform4fv(gl.getUniformLocation(gl.program, 'u_FragColor'), new Float32Array([0.0, 0.0, 0.0, 1.0]));
 
     const a_PointSize = gl.getAttribLocation(gl.program, var_a_PointSize);
-    gl.vertexAttrib1f(a_PointSize, 100.0);
+    gl.vertexAttrib1f(a_PointSize, 1);
 
     //绑定pen与画布（向画布中注入pen的鼠标事件）
     this.pen.injectEvent(canvas, var_a_Position);

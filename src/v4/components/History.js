@@ -22,8 +22,8 @@ const History = ({ pen, figure, index }) => {
   }
 
   const handleMouseLeave = () => {
-    setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.0, 0.0, 1.0]))
-    pen.renderAll();
+    // setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.0, 0.0, 1.0]))
+    // pen.renderAll();
   }
 
 
