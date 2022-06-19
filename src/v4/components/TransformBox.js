@@ -1,4 +1,4 @@
-import { InputNumber, Slider, Switch } from "antd";
+import { InputNumber, Switch } from "antd";
 import { useEffect, useState, useRef } from "react";
 import { Matrix3 } from "three";
 import { setColor } from "../../learnWebGL/utils/glUtils";
@@ -42,12 +42,12 @@ const TransformBox = ({ pen, figure, index }) => {
     f.draw(pen.gl, 'a_Position');
 
     //绘制原点
-    
+
     if (showBasePoint) {
       new Line(baseX - 0.05, baseY, baseX + 0.05, baseY).draw(pen.gl, 'a_Position');
       new Line(baseX, baseY - 0.05, baseX, baseY + 0.05).draw(pen.gl, 'a_Position');
     }
-    
+
     setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.0, 0.0, 1.0]));
   }
 

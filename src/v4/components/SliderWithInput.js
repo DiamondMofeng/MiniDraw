@@ -1,5 +1,4 @@
 import { Col, InputNumber, Row, Slider } from "antd";
-import { useState } from "react";
 
 const SliderWithInput = (props) => {
 
