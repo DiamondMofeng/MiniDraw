@@ -1,8 +1,9 @@
-import { Slider } from "antd";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect } from "react";
 import { setColor } from "../../learnWebGL/utils/glUtils";
 import ENUM_PEN_TYPES from "../types/penTypes"
+import EditBox from "./EditBox";
 import './History.css'
+import Transform from "./Transform";
 
 const History = ({ pen, figure, index }) => {
 
@@ -49,67 +50,11 @@ const History = ({ pen, figure, index }) => {
   })
 
 
-  const EditBox = () => {
-    const [onEdit, setOnEdit] = useState(false);
-    const [x1, setX1] = useState(figure.x1);
-    const [y1, setY1] = useState(figure.y1);
-    const [x2, setX2] = useState(figure.x2);
-    const [y2, setY2] = useState(figure.y2);
-
-    const onEditClick = () => {
-      setOnEdit(!onEdit);
-    }
-
-    const onEditCancel = () => {
-      setOnEdit(false);
-    }
-
-    const onEditConfirm = () => {
-      setOnEdit(false);
-      pen.editAt(index, x1, y1, x2, y2);
-    }
-
-    useEffect(() => {
-      if (!onEdit) {
-        return
-      }
-      setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.0, 0.0, 1.0]));
-      pen.renderAll();
-
-      setColor(pen.gl, 'u_FragColor', new Float32Array([1.0, 0.0, 0.0, 1.0]));
-      new figure.constructor(x1, y1, x2, y2).draw(pen.gl, 'a_Position');
-
-      setColor(pen.gl, 'u_FragColor', new Float32Array([0.0, 0.0, 0.0, 1.0]));
-
-    })
-
-    return (onEdit
-      ? (
-        <div>
-          <button onClick={onEditClick}>编辑</button>
-
-          <li>x1<Slider type="number" step={0.01} max={1} min={-1} value={x1} onChange={setX1} /></li>
-          <li>y1<Slider type="number" step={0.01} max={1} min={-1} value={y1} onChange={setY1} /></li>
-          <li>x2<Slider type="number" step={0.01} max={1} min={-1} value={x2} onChange={setX2} /></li>
-          <li>y2<Slider type="number" step={0.01} max={1} min={-1} value={y2} onChange={setY2} /></li>
-          <button onClick={onEditConfirm}>确认</button>
-          <button onClick={onEditCancel}>取消</button>
-        </div>
-      )
-      : (<div>
-        <button onClick={onEditClick}>编辑</button>
-      </div>
-      )
-    )
-  }
 
 
 
 
-
-
-
-  const item = figure
+  const _figure = figure
   index = figure.index || index
 
   // const handelEdit = () => {
@@ -122,7 +67,7 @@ const History = ({ pen, figure, index }) => {
 
   return (
     <div key={index} ref={historyRef} className='History'>
-      <p>{index}.{item.type}</p>
+      <p>{index}.{_figure.type}</p>
       <button onClick={() => {
         pen.removeAt(index)
       }
@@ -131,16 +76,19 @@ const History = ({ pen, figure, index }) => {
       <button onClick={() => {
         pen.setHidden(index)
       }
-      }>{item.hidden ? "显示" : "隐藏"}</button>
+      }>{_figure.hidden ? "显示" : "隐藏"}</button>
 
       {
         [
           ENUM_PEN_TYPES.line,
           ENUM_PEN_TYPES.rect,
-        ].includes(item.type)
-          ? <EditBox />
+          ENUM_PEN_TYPES.circle,
+        ].includes(_figure.type)
+          ? <EditBox pen={pen} figure={_figure} index={index} />
           : null
       }
+
+      <Transform pen={pen} figure={_figure} index={index} />
 
     </div>
   )

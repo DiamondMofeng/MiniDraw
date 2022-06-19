@@ -9,8 +9,7 @@ import ENUM_PEN_TYPES from "../types/penTypes";
 class DrawObj {
   constructor(type) {
     this.type = type;
-    // this.startX = x;
-    // this.startY = y;
+    this.points = [];
   }
   /**
    * 
@@ -26,6 +25,7 @@ class Line extends DrawObj {
     this.y1 = y1
     this.x2 = x2
     this.y2 = y2
+    this.points = [];
   }
 
   /**
@@ -35,8 +35,24 @@ class Line extends DrawObj {
    */
   draw(gl, attributeName) {
 
-    drawLines(gl, new Float32Array([this.x1, this.y1, this.x2, this.y2]), attributeName);
+    if (
+      !(this.lastX1 === this.x1) ||
+      !(this.lastY1 === this.y1) ||
+      !(this.lastX2 === this.x2) ||
+      !(this.lastY2 === this.y2)) {
+      this.updatePoints();
+    }
 
+    drawLines(gl, this.points, attributeName);
+
+  }
+
+  updatePoints() {
+    this.lastX1 = this.x1
+    this.lastY1 = this.y1
+    this.lastX2 = this.x2
+    this.lastY2 = this.y2
+    this.points = new Float32Array([this.x1, this.y1, this.x2, this.y2]);
   }
 
 }
@@ -57,16 +73,35 @@ class Rect extends DrawObj {
    * @param {String} attributeName 
    */
   draw(gl, attributeName) {
-    const vertices = new Float32Array([
+    if (
+      !(this.lastX1 === this.x1) ||
+      !(this.lastY1 === this.y1) ||
+      !(this.lastX2 === this.x2) ||
+      !(this.lastY2 === this.y2)) {
+      // console.log('update points')
+      this.updatePoints();
+    }
+
+    // console.log('!this.lastX1 === this.x1: ', !this.lastX1 === this.x1);
+    // console.log(this.points)
+
+    drawLineLoop(gl, this.points, attributeName);
+
+  }
+
+  updatePoints() {
+    this.lastX1 = this.x1
+    this.lastY1 = this.y1
+    this.lastX2 = this.x2
+    this.lastY2 = this.y2
+    this.points = new Float32Array([
       this.x1, this.y1,
       this.x2, this.y1,
       this.x2, this.y2,
       this.x1, this.y2,
-    ])
-
-    drawLineLoop(gl, vertices, attributeName);
-
+    ]);
   }
+
 }
 
 class Circle extends DrawObj {
@@ -75,10 +110,47 @@ class Circle extends DrawObj {
    * @param {Number} x - 圆心的x坐标
    * @param {Number} y - 圆心的y坐标
    * @param {Number} r - 圆的半径
-   * @param {Number} points - 圆的点数
+   * @param {Number} pointNum - 圆的点数
    */
-  constructor(x1, y1, x2, y2, points = 48) {
+  constructor(x1, y1, x2, y2, pointNum = 48) {
     super(ENUM_PEN_TYPES.circle);
+    this.x1 = x1
+    this.y1 = y1
+    this.x2 = x2
+    this.y2 = y2
+    this.pointNum = pointNum;
+    this.points = [];
+
+
+
+  }
+
+  draw(gl, attributeName) {
+
+    if (
+      !(this.lastX1 === this.x1) ||
+      !(this.lastY1 === this.y1) ||
+      !(this.lastX2 === this.x2) ||
+      !(this.lastY2 === this.y2)) {
+      this.updatePoints();
+    }
+
+    drawLineLoop(gl, this.points, attributeName);
+
+  }
+
+  updatePoints() {
+    this.lastX1 = this.x1
+    this.lastY1 = this.y1
+    this.lastX2 = this.x2
+    this.lastY2 = this.y2
+    this.points = new Float32Array(this.points);
+
+    let x1 = this.x1,
+      y1 = this.y1,
+      x2 = this.x2,
+      y2 = this.y2;
+    let pointNum = this.pointNum
 
     let centerX = (x1 + x2) / 2;
     let centerY = (y1 + y2) / 2;
@@ -88,22 +160,17 @@ class Circle extends DrawObj {
 
     //提前求出圆上的点的坐标
     let pointsArr = [];
-    for (let i = 0; i < points; i++) {
-      let x = centerX + rX * Math.cos(2 * Math.PI / points * i);
-      let y = centerY + rY * Math.sin(2 * Math.PI / points * i);
+    for (let i = 0; i < pointNum; i++) {
+      let x = centerX + rX * Math.cos(2 * Math.PI / pointNum * i);
+      let y = centerY + rY * Math.sin(2 * Math.PI / pointNum * i);
       pointsArr.push(x);
       pointsArr.push(y);
     }
 
-    this.pointsArr = pointsArr
+    this.points = pointsArr
 
   }
 
-  draw(gl, attributeName) {
-
-    drawLineLoop(gl, this.pointsArr, attributeName);
-
-  }
 }
 
 // 测试产物
@@ -145,16 +212,16 @@ class Circle2 extends DrawObj {
 class MultiLines extends DrawObj {
   constructor(pointsArr) {
     super(ENUM_PEN_TYPES.multiLines);
-    this.pointsArr = pointsArr;
+    this.points = pointsArr;
   }
 
   addPoint(x, y) {
-    this.pointsArr.push(x, y);
+    this.points.push(x, y);
   }
 
   draw(gl, attributeName) {
 
-    drawLineLoop(gl, this.pointsArr, attributeName);
+    drawLineLoop(gl, this.points, attributeName);
 
   }
 }
@@ -162,16 +229,16 @@ class MultiLines extends DrawObj {
 class Free extends DrawObj {
   constructor(pointsArr) {
     super(ENUM_PEN_TYPES.free);
-    this.pointsArr = pointsArr;
+    this.points = pointsArr;
   }
 
   addPoint(x, y) {
-    this.pointsArr.push(x, y);
+    this.points.push(x, y);
   }
 
   draw(gl, attributeName) {
 
-    drawLineStrip(gl, this.pointsArr, attributeName);
+    drawLineStrip(gl, this.points, attributeName);
 
   }
 }
