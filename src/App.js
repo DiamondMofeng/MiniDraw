@@ -8,6 +8,7 @@ import AntiAliasing from "./anti-aliasing/AntiAliasing";
 import V4 from "./v4/v4";
 // import LearnWebGL from "./learnWebGL";
 import './App.css'
+import Skybox from "./skybox/Skybox";
 
 
 
@@ -24,10 +25,11 @@ function App() {
 
       <nav>
         |
-        <Link to="./V1">Canvas2D实现</Link>|
-        <Link to="./V3">WebGL实现</Link>|
-        <Link to="./AA">反走样1</Link>|
-        <Link to="./V4">WebGL&变换</Link>|
+        <Link to="./V1"> Canvas2D实现 </Link>|
+        <Link to="./V3"> WebGL实现 </Link>|
+        <Link to="./AA"> 反走样1 </Link>|
+        <Link to="./V4"> WebGL&变换 </Link>|
+        <Link to="./Skybox"> SkyBox </Link>|
       </nav>
 
 
@@ -37,6 +39,7 @@ function App() {
         <Route path="/V3" element={<V3 />} />
         <Route path="/AA" element={<AntiAliasing />} />
         <Route path="/V4" element={<V4 />} />
+        <Route path="/Skybox" element={<Skybox />} />
       </Routes>
 
     </div>
