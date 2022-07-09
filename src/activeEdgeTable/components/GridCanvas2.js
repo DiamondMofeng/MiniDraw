@@ -15,6 +15,8 @@ const colorYellow = 2;
 const colorRed = 3;
 const colorBlue = 4;
 
+
+const maxSideSize = 200;
 // const colorLine = new Float32Array([0, 0, 0, 1]);
 
 // async function sleep(time) {
@@ -124,14 +126,14 @@ class GridCanvas2 extends Component {
       <div className="gridCanvas">
         <div style={{ alignContent: "center" }}>
           <p />
-          <p>网格大小</p>
-          <SliderWithInput min={10} max={200} value={this.state.gridSize} onChange={(value) => this.setState({ gridSize: value })} style={{ width: "30%", position: "relative", left: "40%" }} />
+          <p>网格密度</p>
+          <SliderWithInput min={10} max={maxSideSize} value={this.state.gridSize} onChange={(value) => this.setState({ gridSize: value })} style={{ width: "30%", position: "relative", left: "40%" }} />
           <p />
         </div>
         <canvas ref={this.canvasRef} width={canvasWidth} height={canvasHeight} style={{ borderStyle: 'solid' }} />
         <p>
-          <button onClick={() => this.runScanFill()}>扫描填充</button>
-          <button onClick={() => this.delayDrawAll()}>逐步绘制</button>
+          <button onClick={() => this.runScanFill()}>全部填充</button>
+          <button onClick={() => this.delayDrawAll()}>逐步扫描</button>
           <button onClick={() => this.setState({ points: [] })}>clear</button>
         </p>
       </div>
@@ -381,6 +383,7 @@ class GridCanvas2 extends Component {
     let points = [];  //要绘制的点储存在这里
 
     points = allPoints.filter(point => point.color === colorBlack);
+    let blackPoints = [...points];
     this.drawAll(points);
 
     let ys = points.map(point => point.y);
@@ -388,13 +391,16 @@ class GridCanvas2 extends Component {
     let endY = Math.max(...ys);
 
     let timer = setInterval(() => {
-      points = points.concat(allPoints.filter(point => point.y === y).map(point => new Point(point.x, point.y, colorBlue)));
+      points = points.concat(allPoints.filter(point => point.y === y && blackPoints.includes(point) === false)
+        .map(point => new Point(point.x, point.y, colorBlue)));
       this.drawAll(points);
       y++;
       if (y > endY) {
+        this.setState({ points: allPoints });
         clearInterval(timer);
       }
     }, delay);
+
 
     this.delayDrawing = false;
 
