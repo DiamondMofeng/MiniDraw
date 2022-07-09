@@ -9,6 +9,7 @@ import V4 from "./v4/v4";
 // import LearnWebGL from "./learnWebGL";
 import './App.css'
 import Skybox from "./skybox/Skybox";
+import GridCanvas from "./activeEdgeTable/components/GridCanvas";
 
 
 
@@ -30,6 +31,7 @@ function App() {
         <Link to="./AA"> 反走样1 </Link>|
         <Link to="./V4"> WebGL&变换 </Link>|
         <Link to="./Skybox"> SkyBox </Link>|
+        <Link to="./AET"> AET </Link>|
       </nav>
 
 
@@ -40,6 +42,7 @@ function App() {
         <Route path="/AA" element={<AntiAliasing />} />
         <Route path="/V4" element={<V4 />} />
         <Route path="/Skybox" element={<Skybox />} />
+        <Route path="/AET" element={<GridCanvas />} />
       </Routes>
 
     </div>

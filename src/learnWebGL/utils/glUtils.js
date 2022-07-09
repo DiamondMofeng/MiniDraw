@@ -99,7 +99,7 @@ export function loadShader(gl, type, source) {
  * @param {*} points 
  * @param {*} attributeName 
  */
-export function pointsIntoAttributeByAttributeName(gl, points, attributeName) {
+export function pointsIntoAttributeByAttributeName(gl, points, attributeName, sizePerPoint = 2) {
 
   if (points instanceof Float32Array === false) {
     points = new Float32Array(points);
@@ -111,7 +111,7 @@ export function pointsIntoAttributeByAttributeName(gl, points, attributeName) {
   gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
   //把点数据传给attribute变量
   const a_Position = gl.getAttribLocation(gl.program, attributeName);
-  gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
+  gl.vertexAttribPointer(a_Position, sizePerPoint, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(a_Position);
 
 }
