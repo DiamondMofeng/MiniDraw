@@ -9,7 +9,7 @@ import V4 from "./v4/v4";
 // import LearnWebGL from "./learnWebGL";
 import './App.css'
 import Skybox from "./skybox/Skybox";
-import GridCanvas from "./activeEdgeTable/components/GridCanvas";
+import ActiveEdgeTable from "./activeEdgeTable/ActiveEdgeTable";
 
 
 
@@ -42,7 +42,7 @@ function App() {
         <Route path="/AA" element={<AntiAliasing />} />
         <Route path="/V4" element={<V4 />} />
         <Route path="/Skybox" element={<Skybox />} />
-        <Route path="/AET" element={<GridCanvas />} />
+        <Route path="/AET" element={<ActiveEdgeTable />} />
       </Routes>
 
     </div>

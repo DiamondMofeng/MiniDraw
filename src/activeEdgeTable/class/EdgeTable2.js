@@ -1,47 +1,18 @@
 // import { DrawObj } from "../../v4/class/DrawObj";
 
-//直接使用二维矩阵的格式
+//接受顶点数组
 
 // const colorWhite = 0;
 const colorBlack = 1;
 
-function getXYPointsFromMatrix(matrix) {
-  let points = [];
-  for (let y = 0; y < matrix.length; y++) {
-    for (let x = 0; x < matrix[0].length; x++) {
-      if (matrix[y][x] === colorBlack) {
-        points.push({
-          x: x,
-          y: y
-        });
-      }
-    }
-  }
-  return points;
-}
-
-export class ActiveNode {
-  constructor(id, x, ymax) {
-    this.id = id;
-    this.x = x;
-    this.ymax = ymax;
-    this.k_1 = 0;
-    this.next = null;
-  }
-
-}
-
-export class ActiveEdgeTable {
-
-
-
-}
 
 
 export class Edge {
-  constructor(x, maxY, k_reciprocal) {
+  constructor(x, maxY, minY, k_reciprocal) {
     this.x = x;
+    this.oriX = x;
     this.maxY = maxY;
+    this.minY = minY;
     this.k_reciprocal = k_reciprocal;
     // this.next = null;
   }
@@ -52,21 +23,23 @@ export class Edge {
  */
 export class EdgeTable {
 
-  constructor(matrix, fillInConstrutor = true) {
-    let points = getXYPointsFromMatrix(matrix);
+  constructor(points, fillInConstrutor = true) {
+    points = points.filter(item => item.color === colorBlack);
     let [minY, maxY] = [Math.min(...points.map(xy => xy.y)), Math.max(...points.map(xy => xy.y))]
     this.nodes = [];
     for (let i = minY; i <= maxY; i++) {
       this.nodes[i] = [];
     }
     if (fillInConstrutor) {
-      this.fillEdgeTable(matrix);
+      this.fillEdgeTable(points);
     }
   }
 
-  fillEdgeTable(matrix) {
-    let points = getXYPointsFromMatrix(matrix);
+  fillEdgeTable(points) {
     console.log('初始顶点 ', points);
+
+    let lastEdge = null;  //用于后续处理公共顶点
+
     for (let i = 0; i < points.length; i++) {
       //两两遍历节点作为边
       let p1 = points[i];
@@ -75,54 +48,70 @@ export class EdgeTable {
 
 
       //构造节点
-      let startX = Math.min(p1.x, p2.x);
+      // let startX = Math.min(p1.x, p2.x);
       let maxY = Math.max(p1.y, p2.y);
       let k = (p2.y - p1.y) / (p2.x - p1.x);
-      let K_reciprocal = 1 / k;
+      let k_reciprocal = 1 / k;
 
 
       //找到两点的y值最小的那个,将这个节点放入表中相应y处
       let minY = Math.min(p1.y, p2.y);
-      this.nodes[minY].push(new Edge(startX, maxY, K_reciprocal));
-      console.log('this.nodes: ', this.nodes);
+      let XofMinY = p1.y < p2.y ? p1.x : p2.x;
+      //考虑缩短maxY,以应对公共顶点
+      //与上一个边相交的情况
+      if (lastEdge && lastEdge.maxY === minY) {
+        lastEdge.maxY -= 1;
+      }
+      let curEdge = new Edge(XofMinY, maxY, minY, k_reciprocal);
+      this.nodes[minY].push(curEdge);
+      console.log('构造ET中', JSON.parse(JSON.stringify(this.nodes)));
     }
+
+    //对每个链表进行排序
+    for (let i = 0; i < this.nodes.length; i++) {
+      if (!this.nodes[i]) {
+        continue;
+      }
+      this.nodes[i].sort((a, b) => a.x - b.x);
+    }
+
   }
 
 }
 
-function getMinY(matrix) {
+function getMinY(points) {
 
-  let points = getXYPointsFromMatrix(matrix);
   return Math.min(...points.map(xy => xy.y));
 
 }
 
-function getMaxY(matrix) {
+function getMaxY(points) {
 
-  let points = getXYPointsFromMatrix(matrix);
   return Math.max(...points.map(xy => xy.y));
 
 }
 
 
-export function scanFill(matrix, fillFunc) {
+export function scanFill(points, fillFunc) {
 
   //* 1.获得被填充的ET和空的AET
-  let ET = new EdgeTable(matrix, true);
+  let ET = new EdgeTable(points, true);
   // let AET = new EdgeTable(figure, false);
   let AET = [];
 
   //扫描线工作范围
-  let startY = getMinY(matrix);
-  let endY = getMaxY(matrix);
+  let startY = getMinY(points);
+  let endY = getMaxY(points);
 
   //* 2.将第一个不空的ET表中的边与AET表合并
   for (let curY = startY; curY <= endY; curY++) {
     if (ET.nodes[curY].length > 0) {
+      console.log('ET.nodes: ', ET.nodes);
       AET = AET.concat(ET.nodes[curY]);
       break;
     }
   }
+  console.log("初始AET:", AET);
 
 
   //* 3.由AET表中取出交点并进行填充
@@ -130,6 +119,8 @@ export function scanFill(matrix, fillFunc) {
   let curY = startY;
 
   while (AET.length > 0) {
+    console.log('当前Y: ', curY);
+    console.log("当前AET:", AET);
 
     let onFill = false; //是否在填充中（是否在多边形内部）
     let lastX = 0;      //上一个点的x坐标
@@ -150,6 +141,8 @@ export function scanFill(matrix, fillFunc) {
           ? rightX - 1
           : Math.floor(rightX);
 
+        //填充
+        console.log('填充: ', leftX, rightX);
         fillFunc(curY, leftX, rightX);  //TODO
 
       }
@@ -160,9 +153,9 @@ export function scanFill(matrix, fillFunc) {
     }
 
     //* 4.当前Y的扫描结束，为下一个Y的扫描做准备
-    //清除当前y=maxY的边
+    //清除当前y>=maxY的边
     let _curY = curY;
-    AET = AET.filter(node => node.maxY !== _curY);
+    AET = AET.filter(node => node.maxY > _curY);
 
     //y=y+1
     curY += 1;
@@ -175,7 +168,7 @@ export function scanFill(matrix, fillFunc) {
     }
     //按x的大小排序
     AET.sort((a, b) => {
-      return a.x - b.x;
+      return (a.x - b.x) === 0 ? (a.k_reciprocal - b.k_reciprocal) : (a.x - b.x);
     })
 
     //开始下个循环

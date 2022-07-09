@@ -3,7 +3,7 @@
 
 import { Component, createRef } from "react";
 import { initShaders, pointsIntoAttributeByAttributeName } from "../../learnWebGL/utils/glUtils";
-import { scanFill } from "../class/EdgeTable";
+import { scanFill } from "../class/EdgeTable2";
 
 const canvasWidth = 500;
 const canvasHeight = 500;
@@ -24,10 +24,18 @@ const colorBlack = 1;
 const colorYellow = 2;
 const colorRed = 3;
 
-const colorLine = new Float32Array([1, 1, 1, 1]);
+const colorLine = new Float32Array([0, 0, 0, 1]);
 
 
-class GridCanvas extends Component {
+class Point {
+  constructor(x, y, color) {
+    this.x = x;
+    this.y = y;
+    this.color = color;
+  }
+}
+
+class GridCanvas2 extends Component {
 
   constructor() {
     super();
@@ -35,10 +43,9 @@ class GridCanvas extends Component {
     this._height = containerY;
     this.canvasRef = createRef();
     this.gl = null;
-    //构建一个矩阵，用来存储每个方块的状态
-    //暂时只储存每个方块的颜色
+    //构建一个数组，存放每个顶点的坐标和颜色
     this.state = {
-      grid: new Array(this._height).fill(0).map(() => new Array(this._width).fill(colorWhite))
+      points: []
     }
 
   }
@@ -112,6 +119,7 @@ class GridCanvas extends Component {
         <canvas ref={this.canvasRef} width={500} height={500} style={{ borderStyle: 'solid' }} />
         <p>
           <button onClick={() => this.runScanFill()}>扫描填充</button>
+          <button onClick={() => this.setState({ points: [] })}>clear</button>
         </p>
       </div>
     )
@@ -123,19 +131,28 @@ class GridCanvas extends Component {
 
   drawAll() {
     // this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-    let [vertexes, color] = this.getVerticesAndColorByMatrix(this.state.grid);
+    let [vertexes, color] = this.getVerticesAndColorByPoints(this.state.points);
     this.drawPointsWithColor(this.gl, vertexes, color);
     this.drawGrid(this.gl, containerX, containerY);
   }
 
+
+  /**
+   * 若存在点，则删除。若不存在点，则添加
+   * @param {*} x 
+   * @param {*} y 
+   */
   reverseBlock(x, y) {
     // console.log('x, y: ', x, y);
-    const grid = this.state.grid;
-    grid[y][x] = grid[y][x] === colorWhite ? colorBlack : colorWhite;
-    this.setState({
-      grid: grid
-    })
-    // this.renderAll();
+    const points = this.state.points;
+    let pointIndex = points.indexOf(p => p.x === x && p.y === y);
+    if (pointIndex !== -1) {
+      points.splice(pointIndex, 1);
+    }
+    else {
+      points.push(new Point(x, y, colorBlack));
+    }
+    this.setState({ points });
   }
 
 
@@ -145,57 +162,51 @@ class GridCanvas extends Component {
    * @param {*} matrix 
    * @returns [ vetexes, color ]
    */
-  getVerticesAndColorByMatrix(matrix) {
+  getVerticesAndColorByPoints(points) {
     let vertexes = [];
-    let row = matrix.length;
-    let col = matrix[0].length;
-
-    let pointIntervalX = 2 / col;
-    let pointIntervalY = 2 / row;
-
-    for (let y = 0; y < row; y++) {
-      for (let x = 0; x < col; x++) {
-        //调整至[-1,1]
-        let xPos = -1 + (x + 0.5) * pointIntervalX;
-        let yPos = -1 + (y + 0.5) * pointIntervalY;
-        vertexes.push(
-          xPos,  //x
-          yPos,  //y
-          0,
-          1
-        );
-      }
-    }
-    // console.log('vertexes: ', vertexes);
-
-
-
     let color = [];
-    for (let y = 0; y < row; y++) {
-      for (let x = 0; x < col; x++) {
-        let thisColor;
-        switch (matrix[y][x]) {
-          case colorWhite:
-            thisColor = [1, 1, 1, 1];
-            break;
-          case colorBlack:
-            thisColor = [0, 0, 0, 1];
-            break;
-          case colorYellow:
-            thisColor = [1, 1, 0, 1];
-            break;
-          case colorRed:
-            thisColor = [1, 0, 0, 1];
-            break;
-          default:
-            thisColor = [0, 0, 0, 1];
-            break;
-        }
-        color.push(
-          ...thisColor
-        )
+
+    let pointIntervalX = 2 / containerX;
+    let pointIntervalY = 2 / containerY;
+
+    for (let point of points) {
+      //处理顶点坐标
+      let { x, y } = point;
+      //调整至[-1,1]
+      let xPos = -1 + (x + 0.5) * pointIntervalX;
+      let yPos = -1 + (y + 0.5) * pointIntervalY;
+      vertexes.push(
+        xPos,  //x
+        yPos,  //y
+        0,
+        1
+      );
+
+      //处理顶点颜色
+      let thisColor;
+      switch (point.color) {
+        case colorWhite:
+          thisColor = [1, 1, 1, 1];
+          break;
+        case colorBlack:
+          thisColor = [0, 0, 0, 1];
+          break;
+        case colorYellow:
+          thisColor = [1, 1, 0, 1];
+          break;
+        case colorRed:
+          thisColor = [1, 0, 0, 1];
+          break;
+        default:
+          thisColor = [0, 0, 0, 1];
+          break;
       }
+      color.push(
+        ...thisColor
+      )
+
     }
+
     // console.log('color: ', color);
     return [new Float32Array(vertexes), new Float32Array(color)]
   }
@@ -214,6 +225,7 @@ class GridCanvas extends Component {
     pointsIntoAttributeByAttributeName(gl, color, "a_Color", 4);
 
     gl.drawArrays(gl.POINTS, 0, vertices.length / 4);
+    gl.drawArrays(gl.LINE_LOOP, 0, vertices.length / 4);
   }
 
 
@@ -265,22 +277,17 @@ class GridCanvas extends Component {
 
 
   runScanFill() {
-    let matrix = JSON.parse(JSON.stringify(this.state.grid));
+    let points = JSON.parse(JSON.stringify(this.state.points));
 
-    scanFill(matrix,
-      ((y, x1, x2) => {
+    scanFill(points,
+      (y, x1, x2) => {
         console.log('y, x1, x2: ', y, x1, x2);
-        let grid = this.state.grid;
+        let points = this.state.points;
         for (let x = x1; x <= x2; x++) {
-          grid[y][x] = grid[y][x] === colorBlack ? colorBlack : colorRed;
+          points.push(new Point(x, y, colorRed));
         }
-        this.setState({
-          grid: grid
-        })
-        // this.setState({
-        //   grid: matrix
-        // })
-      })
+        this.setState({ points })
+      }
 
     );
   }
@@ -292,4 +299,4 @@ class GridCanvas extends Component {
 
 
 }
-export default GridCanvas;
+export default GridCanvas2;
