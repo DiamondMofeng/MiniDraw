@@ -2,11 +2,11 @@ import { Col, InputNumber, Row, Slider } from "antd";
 
 const SliderWithInput = (props) => {
 
-  const { min, max, step, value, onChange} = props;
+  const { min, max, step, value, onChange, style } = props;
 
 
   return (
-    <Row>
+    <Row style={style}>
       {/* <Col span={1}>
         {text}
       </Col> */}
@@ -27,6 +27,7 @@ const SliderWithInput = (props) => {
           step={step}
           value={value}
           onChange={onChange}
+
         />
       </Col>
     </Row>

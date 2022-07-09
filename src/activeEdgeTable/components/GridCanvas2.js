@@ -4,7 +4,7 @@
 import { Component, createRef } from "react";
 import { initShaders, pointsIntoAttributeByAttributeName } from "../../learnWebGL/utils/glUtils";
 import { scanFill } from "../class/EdgeTable2";
-import { Slider } from "antd";
+import SliderWithInput from "../../v4/components/SliderWithInput";
 
 const canvasWidth = 500;
 const canvasHeight = 500;
@@ -13,8 +13,19 @@ const colorWhite = 0;
 const colorBlack = 1;
 const colorYellow = 2;
 const colorRed = 3;
+const colorBlue = 4;
 
 // const colorLine = new Float32Array([0, 0, 0, 1]);
+
+// async function sleep(time) {
+//   console.log('Hello')
+//   await _sleep(time)
+//   console.log('world!')
+// }
+
+// function _sleep(ms) {
+//   return new Promise(resolve => setTimeout(resolve, ms))
+// }
 
 
 class Point {
@@ -114,11 +125,13 @@ class GridCanvas2 extends Component {
         <div style={{ alignContent: "center" }}>
           <p />
           <p>网格大小</p>
-          <Slider value={this.state.gridSize} onChange={(value) => this.setState({ gridSize: value })} style={{ width: "30%", position: "relative", left: "35%" }} />
+          <SliderWithInput min={10} max={200} value={this.state.gridSize} onChange={(value) => this.setState({ gridSize: value })} style={{ width: "30%", position: "relative", left: "40%" }} />
+          <p />
         </div>
         <canvas ref={this.canvasRef} width={canvasWidth} height={canvasHeight} style={{ borderStyle: 'solid' }} />
         <p>
           <button onClick={() => this.runScanFill()}>扫描填充</button>
+          <button onClick={() => this.delayDrawAll()}>逐步绘制</button>
           <button onClick={() => this.setState({ points: [] })}>clear</button>
         </p>
       </div>
@@ -148,11 +161,15 @@ class GridCanvas2 extends Component {
 
   }
 
-  drawAll() {
+  drawAll(points = this.state.points) {
     // this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-    let [vertexes, color] = this.getVerticesAndColorByPoints(this.state.points);
+
+    let isDrawOuterLine = points.every(point => point.color === colorBlack);
+
+    let [vertexes, color] = this.getVerticesAndColorByPoints(points);
     this.drawGrid(this.gl, this.containerX, this.containerY);
-    this.drawPointsWithColor(this.gl, vertexes, color);
+    this.drawPointsWithColor(this.gl, vertexes, color, isDrawOuterLine);
+    // sleep(1000);
   }
 
 
@@ -216,6 +233,9 @@ class GridCanvas2 extends Component {
         case colorRed:
           thisColor = [1, 0, 0, 1];
           break;
+        case colorBlue:
+          thisColor = [0, 0, 1, 1];
+          break;
         default:
           thisColor = [0, 0, 0, 1];
           break;
@@ -236,7 +256,7 @@ class GridCanvas2 extends Component {
    * @param {Array|Float32Array} vertices - 一维顶点数组，每个顶点是一个vec2
    * @param {Array|Float32Array} color - 一维颜色数组，每个颜色是一个vec4
    */
-  drawPointsWithColor(gl, vertices, color) {
+  drawPointsWithColor(gl, vertices, color, isDrawOuterLine) {
     vertices = (vertices instanceof Float32Array) ? vertices : new Float32Array(vertices);
     color = (color instanceof Float32Array) ? color : new Float32Array(color);
 
@@ -244,7 +264,10 @@ class GridCanvas2 extends Component {
     pointsIntoAttributeByAttributeName(gl, color, "a_Color", 4);
 
     gl.drawArrays(gl.POINTS, 0, vertices.length / 4);
-    // gl.drawArrays(gl.LINE_LOOP, 0, vertices.length / 4);
+
+    if (isDrawOuterLine) {
+      gl.drawArrays(gl.LINE_LOOP, 0, vertices.length / 4);
+    }
   }
 
 
@@ -300,36 +323,83 @@ class GridCanvas2 extends Component {
 
 
 
-  runScanFill() {
-    let points = JSON.parse(JSON.stringify(this.state.points));
+  runScanFill(onlyGetVertices = false) {
+    let oriPoints = JSON.parse(JSON.stringify(this.state.points));
 
-    scanFill(points,
-      (y, x1, x2) => {
-        // sleep(100);//sleep
-        // console.log('y, x1, x2: ', y, x1, x2);
-        let points = this.state.points;
-        for (let x = x1; x <= x2; x++) {
-          if (points.find(point => point.x === x && point.y === y)) {
-            continue;
+    scanFill(oriPoints,
+      onlyGetVertices
+        ? (y, x1, x2) => {
+          for (let x = x1; x <= x2; x++) {
+            if (oriPoints.find(point => point.x === x && point.y === y)) {
+              continue;
+            }
+            oriPoints.push(new Point(x, y, colorRed));
           }
-          points.push(new Point(x, y, colorRed));
         }
-        this.setState({ points })
-      }
+        : (y, x1, x2) => {
+          // console.log('y, x1, x2: ', y, x1, x2);
+          let points = this.state.points;
+          for (let x = x1; x <= x2; x++) {
+            if (points.find(point => point.x === x && point.y === y)) {
+              continue;
+            }
+            points.push(new Point(x, y, colorRed));
+          }
+          this.setState({ points })
+        })
 
-    );
-
-    // function sleep(delay) {
-    //   var start = (new Date()).getTime();
-    //   while ((new Date()).getTime() - start < delay) {
-    //     continue;
-    //   }
-    // }
+    if (onlyGetVertices) {
+      return oriPoints;
+    }
 
 
 
   }
 
+  /**
+   * 
+   * @param {Number} delay 
+   */
+  delayDrawAll(delay) {
+
+    if (this.delayDrawing) {
+      return;
+    }
+    this.delayDrawing = true;
+
+    if (delay === undefined) {
+      //自动得出delay
+      const TimeDuration = 3000;
+      delay = TimeDuration / this.containerY;
+    }
+
+
+    //对points进行延时绘制
+    //思路：先绘制原顶点，再逐y绘制
+    let allPoints = this.runScanFill(true);
+    // console.log('allPoints: ', allPoints);
+    let points = [];  //要绘制的点储存在这里
+
+    points = allPoints.filter(point => point.color === colorBlack);
+    this.drawAll(points);
+
+    let ys = points.map(point => point.y);
+    let y = Math.min(...ys);
+    let endY = Math.max(...ys);
+
+    let timer = setInterval(() => {
+      points = points.concat(allPoints.filter(point => point.y === y).map(point => new Point(point.x, point.y, colorBlue)));
+      this.drawAll(points);
+      y++;
+      if (y > endY) {
+        clearInterval(timer);
+      }
+    }, delay);
+
+    this.delayDrawing = false;
+
+
+  }
 
 
 
