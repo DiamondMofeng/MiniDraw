@@ -4,27 +4,17 @@
 import { Component, createRef } from "react";
 import { initShaders, pointsIntoAttributeByAttributeName } from "../../learnWebGL/utils/glUtils";
 import { scanFill } from "../class/EdgeTable2";
+import { Slider } from "antd";
 
 const canvasWidth = 500;
 const canvasHeight = 500;
-
-const containerX = 10;
-const containerY = 10;
-
-const blockPadding = 5;
-
-const blockWidth = canvasWidth / containerX;
-const blockHeight = canvasHeight / containerY;
-
-const blockSize = Math.min(blockWidth - blockPadding, blockHeight - blockPadding);
-
 
 const colorWhite = 0;
 const colorBlack = 1;
 const colorYellow = 2;
 const colorRed = 3;
 
-const colorLine = new Float32Array([0, 0, 0, 1]);
+// const colorLine = new Float32Array([0, 0, 0, 1]);
 
 
 class Point {
@@ -39,13 +29,12 @@ class GridCanvas2 extends Component {
 
   constructor() {
     super();
-    this._width = containerX;
-    this._height = containerY;
     this.canvasRef = createRef();
     this.gl = null;
     //构建一个数组，存放每个顶点的坐标和颜色
     this.state = {
-      points: []
+      points: [],
+      gridSize: 20,
     }
 
   }
@@ -60,6 +49,7 @@ class GridCanvas2 extends Component {
     }
     this.mounted = true;
 
+
     //初始化gl
     let canvas = this.canvasRef.current;
     let gl = canvas.getContext("webgl2");
@@ -71,10 +61,11 @@ class GridCanvas2 extends Component {
     let vshader = glsl`
       attribute vec4 a_Position;
       attribute vec4 a_Color;
+      attribute float a_PointSize;
       varying vec4 v_Color;
       void main(){
           gl_Position=a_Position;
-          gl_PointSize=${blockSize.toFixed(1)};
+          gl_PointSize=a_PointSize;
           v_Color=a_Color;
       }
       `;
@@ -88,6 +79,9 @@ class GridCanvas2 extends Component {
 
     initShaders(gl, vshader, fshader);
 
+
+    this.updateSize();
+
     this.drawAll();
 
     //* 绑定点击事件
@@ -95,10 +89,10 @@ class GridCanvas2 extends Component {
     canvas.addEventListener('click', (e) => {
       e.preventDefault();
       // console.log('e: ', e);
-      let x = Math.floor(e.offsetX / blockWidth);
-      let y = Math.floor(e.offsetY / blockHeight);
+      let x = Math.floor(e.offsetX / this.blockWidth);
+      let y = Math.floor(e.offsetY / this.blockHeight);
       //倒转y坐标
-      y = containerY - y - 1;
+      y = this.containerY - y - 1;
       this.reverseBlock(x, y);
 
 
@@ -110,13 +104,19 @@ class GridCanvas2 extends Component {
 
   componentDidUpdate() {
     // console.log('did update')
+    this.updateSize();
     this.drawAll();
   }
 
   render() {
     return (
       <div className="gridCanvas">
-        <canvas ref={this.canvasRef} width={500} height={500} style={{ borderStyle: 'solid' }} />
+        <div style={{ alignContent: "center" }}>
+          <p />
+          <p>网格大小</p>
+          <Slider value={this.state.gridSize} onChange={(value) => this.setState({ gridSize: value })} style={{ width: "30%", position: "relative", left: "35%" }} />
+        </div>
+        <canvas ref={this.canvasRef} width={canvasWidth} height={canvasHeight} style={{ borderStyle: 'solid' }} />
         <p>
           <button onClick={() => this.runScanFill()}>扫描填充</button>
           <button onClick={() => this.setState({ points: [] })}>clear</button>
@@ -129,11 +129,30 @@ class GridCanvas2 extends Component {
 
   //* 辅助函数
 
+  updateSize() {
+    let { gridSize } = this.state;
+
+    this.containerX = gridSize;
+    this.containerY = gridSize;
+
+
+    this.blockWidth = canvasWidth / this.containerX;
+    this.blockHeight = canvasHeight / this.containerY;
+
+    this.blockPadding = Math.min(this.blockHeight, this.blockWidth) / 10; //10%
+
+    this.blockSize = Math.min(this.blockWidth - this.blockPadding, this.blockHeight - this.blockPadding);
+
+    let a_PointSize = this.gl.getAttribLocation(this.gl.program, 'a_PointSize');
+    this.gl.vertexAttrib1f(a_PointSize, this.blockSize);
+
+  }
+
   drawAll() {
     // this.gl.clear(this.gl.COLOR_BUFFER_BIT);
     let [vertexes, color] = this.getVerticesAndColorByPoints(this.state.points);
+    this.drawGrid(this.gl, this.containerX, this.containerY);
     this.drawPointsWithColor(this.gl, vertexes, color);
-    this.drawGrid(this.gl, containerX, containerY);
   }
 
 
@@ -166,8 +185,8 @@ class GridCanvas2 extends Component {
     let vertexes = [];
     let color = [];
 
-    let pointIntervalX = 2 / containerX;
-    let pointIntervalY = 2 / containerY;
+    let pointIntervalX = 2 / this.containerX;
+    let pointIntervalY = 2 / this.containerY;
 
     for (let point of points) {
       //处理顶点坐标
@@ -225,7 +244,7 @@ class GridCanvas2 extends Component {
     pointsIntoAttributeByAttributeName(gl, color, "a_Color", 4);
 
     gl.drawArrays(gl.POINTS, 0, vertices.length / 4);
-    gl.drawArrays(gl.LINE_LOOP, 0, vertices.length / 4);
+    // gl.drawArrays(gl.LINE_LOOP, 0, vertices.length / 4);
   }
 
 
@@ -259,12 +278,17 @@ class GridCanvas2 extends Component {
     // console.log('vertices : ', vertices);
     pointsIntoAttributeByAttributeName(gl, vertexes, "a_Position", 4);
 
-    let color = colorLine;
-    gl.vertexAttrib4fv(gl.getAttribLocation(gl.program, "a_Color"), color);
+    // let color = colorLine;
+    // gl.vertexAttrib4fv(gl.getAttribLocation(gl.program, "a_Color"), color);
 
-    // let color = new Array(points_line_x.length + points_line_y.length).fill(1)
-    // color = new Float32Array(color);
-    // pointsIntoAttributeByAttributeName(gl, color, "a_Color", 4);
+    let color = new Array(points_line_x.length + points_line_y.length).fill(0)
+    for (let i in color) {
+      if ((i - 3) % 4 === 0) {
+        color[i] = 1;
+      }
+    }
+    color = new Float32Array(color);
+    pointsIntoAttributeByAttributeName(gl, color, "a_Color", 4);
     // console.log('color: ', color);
 
 
@@ -281,15 +305,29 @@ class GridCanvas2 extends Component {
 
     scanFill(points,
       (y, x1, x2) => {
+        // sleep(100);//sleep
         console.log('y, x1, x2: ', y, x1, x2);
         let points = this.state.points;
         for (let x = x1; x <= x2; x++) {
+          if (points.find(point => point.x === x && point.y === y)) {
+            continue;
+          }
           points.push(new Point(x, y, colorRed));
         }
         this.setState({ points })
       }
 
     );
+
+    // function sleep(delay) {
+    //   var start = (new Date()).getTime();
+    //   while ((new Date()).getTime() - start < delay) {
+    //     continue;
+    //   }
+    // }
+
+
+
   }
 
 

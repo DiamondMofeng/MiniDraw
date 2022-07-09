@@ -59,11 +59,17 @@ export class EdgeTable {
       let XofMinY = p1.y < p2.y ? p1.x : p2.x;
       //考虑缩短maxY,以应对公共顶点
       //与上一个边相交的情况
+      if (lastEdge) {
+        console.log('lastEdge.maxY: ', lastEdge.maxY);
+        console.log('minY: ', minY);
+      }
       if (lastEdge && lastEdge.maxY === minY) {
         lastEdge.maxY -= 1;
+        console.log("缩短了maxY");
       }
       let curEdge = new Edge(XofMinY, maxY, minY, k_reciprocal);
       this.nodes[minY].push(curEdge);
+      lastEdge = curEdge;
       console.log('构造ET中', JSON.parse(JSON.stringify(this.nodes)));
     }
 
@@ -92,6 +98,11 @@ function getMaxY(points) {
 }
 
 
+/**
+ * 
+ * @param {Point[]} points 
+ * @param {Function} fillFunc - 接受y,x1,x2,请自己实现fill过程
+ */
 export function scanFill(points, fillFunc) {
 
   //* 1.获得被填充的ET和空的AET
@@ -143,7 +154,7 @@ export function scanFill(points, fillFunc) {
 
         //填充
         console.log('填充: ', leftX, rightX);
-        fillFunc(curY, leftX, rightX);  //TODO
+        fillFunc(curY, leftX, rightX);  //* 接口，让调用者自己实现
 
       }
       //后续处理
@@ -190,6 +201,3 @@ export let testRun = () => {
   scanFill(figure);
 }
 
-// function fill() {
-//   //TODO
-// }
