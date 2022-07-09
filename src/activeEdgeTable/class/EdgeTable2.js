@@ -38,6 +38,7 @@ export class EdgeTable {
   fillEdgeTable(points) {
     console.log('初始顶点 ', points);
 
+    let startEdge = null;
     let lastEdge = null;  //用于后续处理公共顶点
 
     for (let i = 0; i < points.length; i++) {
@@ -59,10 +60,6 @@ export class EdgeTable {
       let XofMinY = p1.y < p2.y ? p1.x : p2.x;
       //考虑缩短maxY,以应对公共顶点
       //与上一个边相交的情况
-      if (lastEdge) {
-        console.log('lastEdge.maxY: ', lastEdge.maxY);
-        console.log('minY: ', minY);
-      }
       if (lastEdge && lastEdge.maxY === minY) {
         lastEdge.maxY -= 1;
         console.log("缩短了maxY");
@@ -70,7 +67,18 @@ export class EdgeTable {
       let curEdge = new Edge(XofMinY, maxY, minY, k_reciprocal);
       this.nodes[minY].push(curEdge);
       lastEdge = curEdge;
+      if (!startEdge) {
+        startEdge = curEdge;
+      }
       console.log('构造ET中', JSON.parse(JSON.stringify(this.nodes)));
+    }
+
+    //循环中没有尝试缩短lastEdge,放到现在来进行
+    if (startEdge && lastEdge) {
+      if (lastEdge && lastEdge.maxY === startEdge.minY) {
+        lastEdge.maxY -= 1;
+        console.log("缩短了maxY");
+      }
     }
 
     //对每个链表进行排序
