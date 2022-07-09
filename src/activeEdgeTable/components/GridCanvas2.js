@@ -306,7 +306,7 @@ class GridCanvas2 extends Component {
     scanFill(points,
       (y, x1, x2) => {
         // sleep(100);//sleep
-        console.log('y, x1, x2: ', y, x1, x2);
+        // console.log('y, x1, x2: ', y, x1, x2);
         let points = this.state.points;
         for (let x = x1; x <= x2; x++) {
           if (points.find(point => point.x === x && point.y === y)) {

@@ -5,7 +5,13 @@
 // const colorWhite = 0;
 const colorBlack = 1;
 
+const debugLog = false;
 
+function log(...args) {
+  if (debugLog) {
+    console.log(...args);
+  }
+}
 
 export class Edge {
   constructor(x, maxY, minY, k_reciprocal) {
@@ -36,16 +42,15 @@ export class EdgeTable {
   }
 
   fillEdgeTable(points) {
-    console.log('初始顶点 ', points);
+    log('初始顶点 ', points);
 
-    let startEdge = null;
-    let lastEdge = null;  //用于后续处理公共顶点
+    let edges = [] //用于后续处理公共顶点
 
     for (let i = 0; i < points.length; i++) {
       //两两遍历节点作为边
       let p1 = points[i];
       let p2 = points[(i + 1) % points.length];
-      console.log('p1 : ', p1, "p2:", p2);
+      log('p1 : ', p1, "p2:", p2);
 
 
       //构造节点
@@ -58,28 +63,28 @@ export class EdgeTable {
       //找到两点的y值最小的那个,将这个节点放入表中相应y处
       let minY = Math.min(p1.y, p2.y);
       let XofMinY = p1.y < p2.y ? p1.x : p2.x;
-      //考虑缩短maxY,以应对公共顶点
-      //与上一个边相交的情况
-      if (lastEdge && lastEdge.maxY === minY) {
-        lastEdge.maxY -= 1;
-        console.log("缩短了maxY");
-      }
+
       let curEdge = new Edge(XofMinY, maxY, minY, k_reciprocal);
       this.nodes[minY].push(curEdge);
-      lastEdge = curEdge;
-      if (!startEdge) {
-        startEdge = curEdge;
-      }
-      console.log('构造ET中', JSON.parse(JSON.stringify(this.nodes)));
+
+      edges.push(curEdge);
+      log('构造ET中', JSON.parse(JSON.stringify(this.nodes)));
     }
 
-    //循环中没有尝试缩短lastEdge,放到现在来进行
-    if (startEdge && lastEdge) {
-      if (lastEdge && lastEdge.maxY === startEdge.minY) {
-        lastEdge.maxY -= 1;
-        console.log("缩短了maxY");
+    //按顺序遍历边，以解决公共顶点问题
+    for (let i = 0; i < edges.length; i++) {
+      let curEdge = edges[i];
+      let nextEdge = edges[(i + 1) % edges.length];
+
+      if (curEdge.maxY === nextEdge.minY) {
+        curEdge.maxY -= 1;
+      }
+      else if (curEdge.minY === nextEdge.maxY) {
+        nextEdge.maxY -= 1;
       }
     }
+
+
 
     //对每个链表进行排序
     for (let i = 0; i < this.nodes.length; i++) {
@@ -125,12 +130,12 @@ export function scanFill(points, fillFunc) {
   //* 2.将第一个不空的ET表中的边与AET表合并
   for (let curY = startY; curY <= endY; curY++) {
     if (ET.nodes[curY].length > 0) {
-      console.log('ET.nodes: ', ET.nodes);
+      log('ET.nodes: ', ET.nodes);
       AET = AET.concat(ET.nodes[curY]);
       break;
     }
   }
-  console.log("初始AET:", AET);
+  log("初始AET:", AET);
 
 
   //* 3.由AET表中取出交点并进行填充
@@ -138,8 +143,8 @@ export function scanFill(points, fillFunc) {
   let curY = startY;
 
   while (AET.length > 0) {
-    console.log('当前Y: ', curY);
-    console.log("当前AET:", AET);
+    log('当前Y: ', curY);
+    log("当前AET:", AET);
 
     let onFill = false; //是否在填充中（是否在多边形内部）
     let lastX = 0;      //上一个点的x坐标
@@ -161,7 +166,7 @@ export function scanFill(points, fillFunc) {
           : Math.floor(rightX);
 
         //填充
-        console.log('填充: ', leftX, rightX);
+        log('填充: ', leftX, rightX);
         fillFunc(curY, leftX, rightX);  //* 接口，让调用者自己实现
 
       }
