@@ -1,10 +1,19 @@
 import React, { Component } from "react";
-import { initShaders } from "../../learnWebGL/utils/glUtils";
+import { Matrix4, Vector3 } from "three";
+import { initShaders, pointsIntoAttributeByAttributeName } from "../../learnWebGL/utils/glUtils";
+import { M4 } from "../utils/m4";
 
 const style = {
   borderStyle: "dashed"
 }
 
+class Image {
+  constructor(src, target) {
+    this.src = src;
+    this.target = target;
+    this.ref = React.createRef();
+  }
+}
 
 class CanvasSkybox extends Component {
   /**
@@ -13,9 +22,26 @@ class CanvasSkybox extends Component {
   constructor({ width, height }) {
     super();
     // 创建一个 ref 来存储 canvas 的 DOM 元素
-    this.canvas = React.createRef();
+    this.canvasRef = React.createRef();
 
     //imgae refs
+    this.isLocalImg = true;
+    this.imgs = [
+      new Image(require("../textures-skybox/front.jpg"), "TEXTURE_CUBE_MAP_POSITIVE_X"),
+      new Image(require("../textures-skybox/back.jpg"), "TEXTURE_CUBE_MAP_NEGATIVE_X"),
+      new Image(require("../textures-skybox/top.jpg"), "TEXTURE_CUBE_MAP_POSITIVE_Y"),
+      new Image(require("../textures-skybox/bottom.jpg"), "TEXTURE_CUBE_MAP_NEGATIVE_Y"),
+      new Image(require("../textures-skybox/right.jpg"), "TEXTURE_CUBE_MAP_POSITIVE_Z"),
+      new Image(require("../textures-skybox/left.jpg"), "TEXTURE_CUBE_MAP_NEGATIVE_Z")
+
+      // "../textures-skybox/back.jpg",
+      // "../textures-skybox/front.jpg",
+      // "../textures-skybox/left.jpg",
+      // "../textures-skybox/right.jpg",
+      // "../textures-skybox/top.jpg",
+      // "../textures-skybox/bottom.jpg"
+    ]
+
     this.img1 = React.createRef();
 
     this.back = React.createRef();
@@ -25,6 +51,7 @@ class CanvasSkybox extends Component {
     this.top = React.createRef();
     this.bottom = React.createRef();
 
+    this.gl = null;
 
     this.width = width || 750;
     this.height = height || 750;
@@ -33,184 +60,255 @@ class CanvasSkybox extends Component {
     // const DISPLAY_NONE = { display: "none" };
     return (
       <>
-        <canvas ref={this.canvas} width={this.width} height={this.height} style={style} tabIndex="0">
+        <canvas ref={this.canvasRef} width={this.width} height={this.height} style={style} tabIndex="0">
           如果您看到了这条消息,说明您的浏览器不支持canvas
         </canvas>
 
         <img ref={this.img1} src={require("../textures-skybox/erha_128_jpg.jpg")} alt="dog" style={{ display: "none" }} />
 
-        <img ref={this.back} src={require("../textures-skybox/back.jpg")} alt="back" style={{ display: "none" }} />
+        {/* <img ref={this.back} src={require("../textures-skybox/back.jpg")} alt="back" style={{ display: "none" }} />
         <img ref={this.front} src={require("../textures-skybox/front.jpg")} alt="front" style={{ display: "none" }} />
         <img ref={this.left} src={require("../textures-skybox/left.jpg")} alt="left" style={{ display: "none" }} />
         <img ref={this.right} src={require("../textures-skybox/right.jpg")} alt="right" style={{ display: "none" }} />
         <img ref={this.top} src={require("../textures-skybox/top.jpg")} alt="top" style={{ display: "none" }} />
-        <img ref={this.bottom} src={require("../textures-skybox/bottom.jpg")} alt="bottom" style={{ display: "none" }} />
+        <img ref={this.bottom} src={require("../textures-skybox/bottom.jpg")} alt="bottom" style={{ display: "none" }} /> */}
+
+        {
+          this.imgs.map((img, index) => {
+            return <img key={index} ref={img.ref} src={null} alt={index} style={{ display: "none" }} />
+          })
+        }
 
       </>
     )
   }
   componentDidMount() {
-    //禁用浏览器右键菜单，方便后续操作
-    // window.oncontextmenu = (e) => {
-    //   e.preventDefault();
-    // }
 
-    //获取当前真实canvasDOM对象
-    const canvas = this.canvas.current;
-
-    //初始化webgl
-    // const gl: WebGLRenderingContext = canvas.getContext("webgl2");  //用于智能补全
-    const gl = canvas.getContext("webgl2");
-    if (!gl) {
-      throw new Error("WebGL not supported");
+    if (this.mounted === true) {
+      return
     }
+    this.mounted = true;
 
-    // const var_a_Position = 'a_Position';
-    // const var_a_PointSize = 'a_PointSize';
+    this.gl = this.canvasRef.current.getContext("webgl2");
+    const gl: WebGLRenderingContext = this.gl;
+    // const gl = this.gl;
 
+    //* 初始化着色器
     const glsl = String.raw;
-
-    const vertexShader = glsl`#version 300 es
-      in vec4 a_position;	
-      in vec2 a_uv;
-
-      uniform mat4 uPMatrix;
-      uniform mat4 uMVMatrix;
-      uniform mat4 uCameraMatrix;
-
-      out highp vec3 texCoord;  //Interpolate UV values to the fragment shader
-
-      void main(void){
-           texCoord = a_position.xyz;
-           vec4 pos = uPMatrix * uCameraMatrix * vec4(a_position.xyz, 1.0); 
-           gl_Position = pos.xyww; 
+    const vs =
+      glsl`
+      attribute vec4 a_position;
+      varying vec4 v_position;
+      void main() {
+        v_position = a_position;
+        gl_Position = a_position;
+        gl_Position.z = 1.0;
       }
     `;
 
-    const fragmentShader = glsl`#version 300 es
+    const fs =
+      glsl`
       precision mediump float;
-              
-      in highp vec3 texCoord;
-      uniform samplerCube uCubemap;
-                  
-      out vec4 finalColor;
-      void main(void){
-           finalColor = texture(uCubemap, texCoord);
+
+      uniform samplerCube u_skybox;
+      uniform mat4 u_viewDirectionProjectionInverse;
+      
+      varying vec4 v_position;
+      void main() {
+        vec4 t = u_viewDirectionProjectionInverse * v_position;
+        gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w));
       }
-    `;
+    
+    `
 
-    initShaders(gl, vertexShader, fragmentShader);
+    initShaders(gl, vs, fs);
+
+    //* 初始化顶点 
+    //顶点数据
+    let positions = new Float32Array(
+      [
+        -1, -1,
+        1, -1,
+        -1, 1,
+        -1, 1,
+        1, -1,
+        1, 1,
+      ]);
+
+    pointsIntoAttributeByAttributeName(gl, positions, "a_position", 2);
+
+    //片元数据空间
+    let skyboxLocation = gl.getUniformLocation(gl.program, "u_skybox");
+    let viewDirectionProjectionInverseLocation = gl.getUniformLocation(gl.program, "u_viewDirectionProjectionInverse");
 
 
-    const image = this.img1.current;
-    // image.src = '../textures-skybox/erha_128_jpg.jpg';
-    console.log(image);
-    image.onload = function () {
-      // showMap()
-      // console.log("image loaded")
-    }
-    // this.forceUpdate();
-    console.log(image)
+    //* 绑定材质
+    let texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
 
+    for (let img of this.imgs) {
+      let { target, src } = img;
+      target = gl[target];
+      // let imgObj: HTMLImageElement = img.ref.current;
+      let imgObj = img.ref.current;
 
+      const level = 0;
+      const internalFormat = gl.RGBA
+      const width = 512;
+      const height = 512;
+      const format = gl.RGBA;
+      const type = gl.UNSIGNED_BYTE;
 
-    const imgArray = [
-      this.back.current,
-      this.front.current,
-      this.left.current,
-      this.right.current,
-      this.top.current,
-      this.bottom.current,
-    ]
+      gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null);
 
-    gl.fLoadCubeMap = function (name, imgArray) {
-
-      if (imgArray.length !== 6) return null;
-      let tex = this.createTexture();
-      this.bindTexture(this.TEXTURE_CUBE_MAP, tex);
-      for (let i = 0; i < 6; i++) {
-        this.texImage2D(this.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, this.RGBA, this.RGBA, this.UNSIGNED_BYTE, imgArray[i]);
+      imgObj.src = src;
+      imgObj.onload = () => {
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+        gl.texImage2D(target, level, internalFormat, format, type, imgObj);
+        gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
       }
 
-      this.texParameteri(this.TEXTURE_CUBE_MAP, this.TEXTURE_MAG_FILTER, this.LINEAR);
-      this.texParameteri(this.TEXTURE_CUBE_MAP, this.TEXTURE_MIN_FILTER, this.LINEAR);
-      this.texParameteri(this.TEXTURE_CUBE_MAP, this.TEXTURE_WARP_S, this.CLAMP_TO_EDGE);
-      this.texParameteri(this.TEXTURE_CUBE_MAP, this.TEXTURE_WARP_T, this.CLAMP_TO_EDGE);
-      this.texParameteri(this.TEXTURE_CUBE_MAP, this.TEXTURE_WARP_R, this.CLAMP_TO_EDGE);
+    }
 
-      this.bindTexture(this.TEXTURE_CUBE_MAP, null);
-      this.mTextureCache = this.mTextureCache === undefined ? this.mTextureCache = {} : this.mTextureCache;
-      this.mTextureCache[name] = tex;
-      return tex;
+    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+
+
+
+    //相机
+    function radToDeg(r) {
+      return r * 180 / Math.PI;
+    }
+
+    function degToRad(d) {
+      return d * Math.PI / 180;
     }
 
 
-    gl.fLoadCubeMap("skybox", imgArray);
+    var fieldOfViewRadians = degToRad(60);
+    var cameraYRotationRadians = degToRad(0);
+
+    var spinCamera = true;
+    // Get the starting time.
+    var then = 0;
 
 
-    let cubemap = gl.getUniformLocation(this.program, "uCubemap");
+    requestAnimationFrame(drawScene);
 
-    this.gl.activeTexture(this.gl.TEXTURE0);
+    let timer = setInterval(
+      () => drawScene(new Date() % 10000),100
+    )
+    // Draw the scene.
+    function drawScene(time) {
+      // time = time + 1
+      // convert to seconds
+      time *= 0.001;
+      // Subtract the previous time from the current time
+      var deltaTime = time - then;
+      // Remember the current time for the next frame.
+      then = time;
 
-    // this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, cubeMapTexId);
-    this.gl.uniform1i(cubemap, 0);
+      resizeCanvasToDisplaySize(gl.canvas);
 
-    function createMesh(gl, name, width, height, depth, x, y, z) {
-      let w = width * 0.5, h = height * 0.5, d = depth * 0.5;
-      let x0 = x - w, x1 = x + w, y0 = y - h, y1 = y + h, z0 = z - d, z1 = z + d;
-      var aVert = [
-        x0, y1, z1, 0,	//0 Front
-        x0, y0, z1, 0,	//1
-        x1, y0, z1, 0,	//2
-        x1, y1, z1, 1,	//3 
+      function resizeCanvasToDisplaySize(canvas, multiplier) {
+        multiplier = multiplier || 1;
+        const width = canvas.clientWidth * multiplier | 0;
+        const height = canvas.clientHeight * multiplier | 0;
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+          return true;
+        }
+        return false;
+      }
 
-        x1, y1, z0, 1,	//4 Back
-        x1, y0, z0, 1,	//5
-        x0, y0, z0, 1,	//6
-        x0, y1, z0, 0,	//7 
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-        x0, y1, z0, 2,	//7 Left
-        x0, y0, z0, 2,	//6
-        x0, y0, z1, 2,	//1
-        x0, y1, z1, 1,	//0
+      gl.enable(gl.CULL_FACE);
+      gl.enable(gl.DEPTH_TEST);
 
-        x0, y0, z1, 3,	//1 Bottom
-        x0, y0, z0, 3,	//6
-        x1, y0, z0, 3,	//5
-        x1, y0, z1, 2,	//2
+      // Clear the canvas AND the depth buffer.
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        x1, y1, z1, 4,	//3 Right
-        x1, y0, z1, 4,	//2 
-        x1, y0, z0, 4,	//5
-        x1, y1, z0, 3,	//4
+      // 计算投影矩阵
 
-        x0, y1, z0, 5,	//7 Top
-        x0, y1, z1, 5,	//0
-        x1, y1, z1, 5,	//3
-        x1, y1, z0, 1	//4
-      ];
-      //Build the index of each quad [0,1,2, 2,3,0]
-      var aIndex = [];
-      for (var i = 0; i < aVert.length / 4; i += 2) aIndex.push(i, i + 1, (Math.floor(i / 4) * 4) + ((i + 2) % 4));
+      let m4 = new M4();
+      let aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+      let projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
 
-      //Build UV data for each vertex
-      var aUV = [];
-      for (var i = 0; i < 6; i++) aUV.push(0, 0, 0, 1, 1, 1, 1, 0);
+      // camera going in circle 2 units from origin looking at origin
+      let x = Math.cos(time * 0.1);
+      let z = Math.sin(time * 0.1);
+      let cameraPosition = [0, 0, 0];
+      let target = [x, 0, z];
+      // console.log('target: ', target);
+      let up = [0, 1, 0];
+      // Compute the camera's matrix using look at.
+      // console.log('cameraPosition, target, up: ', cameraPosition, target, up);
+      let cameraMatrix = m4.lookAt(cameraPosition, target, up);
+      // console.log('cameraMatrix: ', cameraMatrix);
 
-      //Build Normal data for each vertex
-      var aNorm = [
-        0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,		//Front
-        0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1,		//Back
-        -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,		//Left
-        0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,		//Bottom
-        1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,		//Right
-        0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0		//Top
-      ]
+      // Make a view matrix from the camera matrix.
+      let viewMatrix = cameraMatrix.inverse();
+      // console.log('viewMatrix: ', viewMatrix);
 
-      var mesh = gl.fCreateMeshVAO(name, aIndex, aVert, aNorm, aUV, 4);
-      mesh.noCulling = true;
-      return mesh;
+      // We only care about direction so remove the translation
+      viewMatrix.elements[12] = 0;
+      viewMatrix.elements[13] = 0;
+      viewMatrix.elements[14] = 0;
+
+      let viewDirectionProjectionMatrix = projectionMatrix.multiply(viewMatrix);
+      console.log('projectionMatrix: ', projectionMatrix);
+      // console.log('viewDirectionProjectionMatrix: ', viewDirectionProjectionMatrix);
+      let viewDirectionProjectionInverseMatrix = viewDirectionProjectionMatrix.inverse();
+      viewDirectionProjectionInverseMatrix = new Float32Array(viewDirectionProjectionInverseMatrix.elements)
+
+      // viewDirectionProjectionInverseMatrix = new Float32Array([
+      //   0.7765839695930481
+      //   , -0
+      //   , 1.1812782287597656
+      //   , -5.956145798791113e-9
+      //   , -0
+      //   , 0.5773502588272095
+      //   , -0
+      //   , -0
+      //   , -0
+      //   , -0
+      //   , -0
+      //   , -0.499750018119812
+      //   , 0.8356030583381653
+      //   , -0
+      //   , -0.5493336915969849
+      //   , 0.5002500414848328
+      // ])
+
+      // Set the uniforms
+      gl.uniformMatrix4fv(
+        viewDirectionProjectionInverseLocation, false,
+        viewDirectionProjectionInverseMatrix);
+
+      // Tell the shader to use texture unit 0 for u_skybox
+      gl.uniform1i(skyboxLocation, 0);
+
+      // let our quad pass the depth test at 1.0
+      gl.depthFunc(gl.LEQUAL);
+
+      // Draw the geometry.
+      gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
+
+      // requestAnimationFrame(drawScene);
     }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -230,3 +328,6 @@ class CanvasSkybox extends Component {
 
 
 export default CanvasSkybox;
+
+
+
