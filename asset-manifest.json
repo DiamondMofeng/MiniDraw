@@ -1,13 +1,19 @@
 {
   "files": {
     "main.css": "/MiniDraw/static/css/main.aa0c87c5.css",
-    "main.js": "/MiniDraw/static/js/main.75fdbf68.js",
+    "main.js": "/MiniDraw/static/js/main.96f64486.js",
+    "static/media/back.jpg": "/MiniDraw/static/media/back.ac799b315cbb17fec05c.jpg",
+    "static/media/left.jpg": "/MiniDraw/static/media/left.27bed59d7a1c2ce0e4b8.jpg",
+    "static/media/right.jpg": "/MiniDraw/static/media/right.124538e7335efde506e8.jpg",
+    "static/media/front.jpg": "/MiniDraw/static/media/front.594202d02a4e817ffbae.jpg",
+    "static/media/top_rr.jpg": "/MiniDraw/static/media/top_rr.abf10ab9f0231d6c07fc.jpg",
+    "static/media/bottom_rr.jpg": "/MiniDraw/static/media/bottom_rr.7cfb94c4d2be177c1122.jpg",
     "index.html": "/MiniDraw/index.html",
     "main.aa0c87c5.css.map": "/MiniDraw/static/css/main.aa0c87c5.css.map",
-    "main.75fdbf68.js.map": "/MiniDraw/static/js/main.75fdbf68.js.map"
+    "main.96f64486.js.map": "/MiniDraw/static/js/main.96f64486.js.map"
   },
   "entrypoints": [
     "static/css/main.aa0c87c5.css",
-    "static/js/main.75fdbf68.js"
+    "static/js/main.96f64486.js"
   ]
 }
