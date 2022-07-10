@@ -1,7 +1,7 @@
 import { Switch } from "antd";
 import React, { Component } from "react";
-import { Matrix4, Vector3 } from "three";
 import { initShaders, pointsIntoAttributeByAttributeName } from "../../learnWebGL/utils/glUtils";
+import SliderWithInput from "../../v4/components/SliderWithInput";
 import { M4 } from "../utils/m4";
 
 const style = {
@@ -30,8 +30,8 @@ class CanvasSkybox extends Component {
     this.imgs = [
       new Image(require("../textures-skybox/front.jpg"), "TEXTURE_CUBE_MAP_POSITIVE_X"),
       new Image(require("../textures-skybox/back.jpg"), "TEXTURE_CUBE_MAP_NEGATIVE_X"),
-      new Image(require("../textures-skybox/top.jpg"), "TEXTURE_CUBE_MAP_POSITIVE_Y"),
-      new Image(require("../textures-skybox/bottom.jpg"), "TEXTURE_CUBE_MAP_NEGATIVE_Y"),
+      new Image(require("../textures-skybox/top_rr.jpg"), "TEXTURE_CUBE_MAP_POSITIVE_Y"),
+      new Image(require("../textures-skybox/bottom_rr.jpg"), "TEXTURE_CUBE_MAP_NEGATIVE_Y"),
       new Image(require("../textures-skybox/right.jpg"), "TEXTURE_CUBE_MAP_NEGATIVE_Z"),
       new Image(require("../textures-skybox/left.jpg"), "TEXTURE_CUBE_MAP_POSITIVE_Z")
 
@@ -54,32 +54,59 @@ class CanvasSkybox extends Component {
 
     this.gl = null;
 
-    this.width = width || 750;
-    this.height = height || 750;
+    this.width = width || 1600;
+    this.height = height || 900;
 
     this.state = {
-      autoSpin: true
+      fov: 60,
+      autoSpin: true,
+      width: this.width,
+      height: this.height
     }
 
   }
   render() {
     // const DISPLAY_NONE = { display: "none" };
     return (
-      <>
-        <canvas ref={this.canvasRef} width={this.width} height={this.height} style={style} tabIndex="0">
+      <div className="CanvasSkybox">
+        <span style={{ backgroundColor: "rgb(123,123,123,0.75)", width: "30%", position: "fixed", right: "10%", bottom: "10%" }}>
+          宽<SliderWithInput min={500} max={1920} step={1} value={this.state.width} onChange={(value) => {
+            this.setState({ width: value });
+          }} />
+          高<SliderWithInput min={500} max={1080} step={1} value={this.state.height} onChange={(value) => {
+            this.setState({ height: value });
+          }} />
+          <p />
+          {/* 方向键控制 */}
+          <Switch checked={this.state.autoSpin} onChange={
+            () => {
+              this.setState({ autoSpin: !this.state.autoSpin });
+            }} ></Switch>
+          自动旋转
+          <p>FOV</p>
+          <SliderWithInput min={1} max={179} step={1} value={this.state.fov}
+            onChange={(value) => {
+              this.setState({ fov: value });
+              // this.canvasRef.current.focus()
+            }}
+          />
+
+        </span>
+
+
+        <canvas ref={this.canvasRef} width={this.state.width} height={this.state.height} style={style} tabIndex="0">
           如果您看到了这条消息,说明您的浏览器不支持canvas
         </canvas>
-        <p>
-          <Switch onClick={() => { this.setState({ autoSpin: !this.state.autoSpin }) }}></Switch>自动旋转
-        </p>
+
 
         {
           this.imgs.map((img, index) => {
             return <img key={index} ref={img.ref} src={null} alt={index} style={{ display: "none" }} />
           })
         }
+      </div>
 
-      </>
+
     )
   }
   componentDidMount() {
@@ -89,9 +116,12 @@ class CanvasSkybox extends Component {
     }
     this.mounted = true;
 
+    // this.bindKeyBoardEvent();
+
+
     this.gl = this.canvasRef.current.getContext("webgl2");
-    const gl: WebGLRenderingContext = this.gl;
-    // const gl = this.gl;
+    // const gl: WebGLRenderingContext = this.gl;
+    const gl = this.gl;
 
     //* 初始化着色器
     const glsl = String.raw;
@@ -137,9 +167,7 @@ class CanvasSkybox extends Component {
 
     pointsIntoAttributeByAttributeName(gl, positions, "a_position", 2);
 
-    //片元数据空间
-    let skyboxLocation = gl.getUniformLocation(gl.program, "u_skybox");
-    let viewDirectionProjectionInverseLocation = gl.getUniformLocation(gl.program, "u_viewDirectionProjectionInverse");
+
 
 
     //* 绑定材质
@@ -174,147 +202,213 @@ class CanvasSkybox extends Component {
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
 
 
-
-    //相机
-    function radToDeg(r) {
-      return r * 180 / Math.PI;
+    if (this.state.autoSpin) {
+      requestAnimationFrame((time) =>
+        this.drawScenceByTime(time, this)
+      );
     }
+
+
+    //* 绘制主入口
+    //作为回调函数执行
+
+    this.drawScene(1, 0, 1)
+
+  }
+
+  // bindKeyBoardEvent() {
+
+  //   let timer = null
+
+  //   this.canvasRef.current.addEventListener("keydown", (e) => {
+  //     e.preventDefault();
+  //     switch (e.key) {
+  //       case "ArrowUp":
+  //       case "w":
+  //       case "W":
+  //         this.w = true;
+  //         break;
+  //       case "ArrowDown":
+  //       case "s":
+  //       case "S":
+  //         this.s = true;
+  //         break;
+  //       case "ArrowLeft":
+  //       case "a":
+  //       case "A":
+  //         this.a = true;
+  //         break;
+  //       case "ArrowRight":
+  //       case "d":
+  //       case "D":
+  //         this.d = true;
+  //         break;
+
+  //       default:
+  //         break;
+  //     }
+  //     timer = setInterval(() => {
+  //       const SPEED_STEP = 1;
+  //       this.speed = 0;
+  //       if (this.d) {
+  //         this.speed += SPEED_STEP;
+  //       }
+  //       if (this.a) {
+  //         this.speed -= SPEED_STEP;
+  //       }
+
+  //       let curRad = Math.atan2(this.y, this.x);
+  //       let newDegree = (curRad * 180 / Math.PI + this.speed) % 360;
+  //       this.x = Math.cos(newDegree * Math.PI / 180);
+  //       this.z = Math.sin(newDegree * Math.PI / 180);
+  //       this.drawScene(this.x, 0, this.z)
+  //     }, 30)
+
+
+  //   }
+  //     , false);
+
+  //   this.canvasRef.current.addEventListener("keyup", (e) => {
+  //     e.preventDefault();
+  //     switch (e.key) {
+  //       case "ArrowUp":
+  //       case "w":
+  //       case "W":
+  //         this.w = false;
+  //         break;
+  //       case "ArrowDown":
+  //       case "s":
+  //       case "S":
+  //         this.s = false;
+  //         break;
+  //       case "ArrowLeft":
+  //       case "a":
+  //       case "A":
+  //         this.a = false;
+  //         break;
+  //       case "ArrowRight":
+  //       case "d":
+  //       case "D":
+  //         this.d = false;
+  //         break;
+  //       default:
+  //         break;
+  //     }
+  //     clearInterval(timer);
+  //   })
+
+  // }
+
+
+
+
+
+
+
+
+
+  componentDidUpdate() {
+    requestAnimationFrame((time) =>
+      this.drawScenceByTime(time, this)
+    );
+  }
+
+
+  drawScenceByTime(time, _this) {
+    time *= 0.001;
+    let x = Math.cos(time * 0.1);
+    let z = Math.sin(time * 0.1);
+    _this.drawScene(x, 0, z)
+    if (_this.state.autoSpin) {
+      requestAnimationFrame((time) =>
+        _this.drawScenceByTime(time, _this)
+      );
+    }
+  }
+
+
+  drawScene(x, y, z) {
+
+    let gl = this.gl
+
+    this.x = x;
+    this.y = y;
+    this.z = z;
 
     function degToRad(d) {
       return d * Math.PI / 180;
     }
 
+    var fieldOfViewRadians = degToRad(this.state.fov || 60);
 
-    var fieldOfViewRadians = degToRad(60);
-    var cameraYRotationRadians = degToRad(0);
+    resizeCanvasToDisplaySize(gl.canvas);
 
-    var spinCamera = true;
-    // Get the starting time.
-    var then = 0;
-
-
-    requestAnimationFrame(drawScene);
-
-    // let timer = setInterval(
-    //   () => drawScene(new Date() % 10000), 100
-    // )
-    // Draw the scene.
-    function drawScene(time) {
-      // time = time + 1
-      // convert to seconds
-      time *= 0.001;
-      // Subtract the previous time from the current time
-      var deltaTime = time - then;
-      // Remember the current time for the next frame.
-      then = time;
-
-      resizeCanvasToDisplaySize(gl.canvas);
-
-      function resizeCanvasToDisplaySize(canvas, multiplier) {
-        multiplier = multiplier || 1;
-        const width = canvas.clientWidth * multiplier | 0;
-        const height = canvas.clientHeight * multiplier | 0;
-        if (canvas.width !== width || canvas.height !== height) {
-          canvas.width = width;
-          canvas.height = height;
-          return true;
-        }
-        return false;
+    function resizeCanvasToDisplaySize(canvas, multiplier) {
+      multiplier = multiplier || 1;
+      const width = canvas.clientWidth * multiplier | 0;
+      const height = canvas.clientHeight * multiplier | 0;
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+        return true;
       }
-
-      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
-      gl.enable(gl.CULL_FACE);
-      gl.enable(gl.DEPTH_TEST);
-
-      // 清空画布
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-      // 计算投影矩阵
-
-      let aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-      // console.log('aspect: ', aspect);
-      // console.log('fieldOfViewRadians: ', fieldOfViewRadians);
-      let projectionMatrix = M4.perspective(fieldOfViewRadians, aspect, 1, 2000); //* 投影矩阵没有问题
-
-      // 不断旋转目标对象位置
-      // 计算lookat矩阵
-      let x = Math.cos(time * 0.1);
-      let z = Math.sin(time * 0.1);
-      let cameraPosition = [x, 0, z];
-      let target = [0, 0, 0];
-      let up = [0, 1, 0];
-
-      let cameraMatrix = M4.lookAt(cameraPosition, target, up); //* LookAt没有问题
-
-
-      // Make a view matrix from the camera matrix.
-      let viewMatrix = cameraMatrix.inverse();  //* 观察矩阵没有问题
-      // console.log('viewMatrix: ', viewMatrix);
-
-      // We only care about direction so remove the translation
-      viewMatrix.elements[12] = 0;
-      viewMatrix.elements[13] = 0;
-      viewMatrix.elements[14] = 0;
-
-      let viewDirectionProjectionMatrix = M4.multiplyBetween(projectionMatrix, viewMatrix);
-      // console.log('viewMatrix: ', viewMatrix);
-      // console.log('projectionMatrix: ', projectionMatrix);
-      // console.log('viewDirectionProjectionMatrix: ', viewDirectionProjectionMatrix);
-      let viewDirectionProjectionInverseMatrix = viewDirectionProjectionMatrix.inverse();
-
-      // viewDirectionProjectionInverseMatrix = new Float32Array([
-      //   0.7765839695930481
-      //   , -0
-      //   , 1.1812782287597656
-      //   , -5.956145798791113e-9
-      //   , -0
-      //   , 0.5773502588272095
-      //   , -0
-      //   , -0
-      //   , -0
-      //   , -0
-      //   , -0
-      //   , -0.499750018119812
-      //   , 0.8356030583381653
-      //   , -0
-      //   , -0.5493336915969849
-      //   , 0.5002500414848328
-      // ])
-
-      // Set the uniforms
-      gl.uniformMatrix4fv(
-        viewDirectionProjectionInverseLocation, false,
-        viewDirectionProjectionInverseMatrix.elements);
-
-      // Tell the shader to use texture unit 0 for u_skybox
-      gl.uniform1i(skyboxLocation, 0);
-
-      // let our quad pass the depth test at 1.0
-      gl.depthFunc(gl.LEQUAL);
-
-      // Draw the geometry.
-      gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
-
-      requestAnimationFrame(drawScene);
+      return false;
     }
 
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+
+    // 清空画布
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // 计算投影矩阵
+
+    let aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+    let projectionMatrix = M4.perspective(fieldOfViewRadians, aspect, 1, 2000); //* 投影矩阵没有问题
+
+    // 不断旋转目标对象位置
+    // 计算lookat矩阵
+    // let x = Math.cos(time * 0.1);
+    // let z = Math.sin(time * 0.1);
+    let cameraPosition = [x, 0, z];
+    let target = [0, 0, 0];
+    let up = [0, 1, 0];
+
+    let cameraMatrix = M4.lookAt(cameraPosition, target, up); //* LookAt没有问题
 
 
+    // 由lookAt得出观察矩阵
+    let viewMatrix = cameraMatrix.inverse();  //* 观察矩阵没有问题
 
+    // 去掉缩放部分
+    viewMatrix.elements[12] = 0;
+    viewMatrix.elements[13] = 0;
+    viewMatrix.elements[14] = 0;
 
+    let viewDirectionProjectionMatrix = M4.multiplyBetween(projectionMatrix, viewMatrix);
+    let viewDirectionProjectionInverseMatrix = viewDirectionProjectionMatrix.inverse();
 
+    // 处理片元
+    //片元数据空间
+    let skyboxLocation = gl.getUniformLocation(gl.program, "u_skybox");
+    let viewDirectionProjectionInverseLocation = gl.getUniformLocation(gl.program, "u_viewDirectionProjectionInverse");
 
+    gl.uniformMatrix4fv(
+      viewDirectionProjectionInverseLocation, false,
+      viewDirectionProjectionInverseMatrix.elements);
 
+    gl.uniform1i(skyboxLocation, 0);
 
+    // let our quad pass the depth test at 1.0
+    gl.depthFunc(gl.LEQUAL);
 
+    gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
 
-
-
+    // requestAnimationFrame(drawScene);
 
   }
-
-
 
 
 
