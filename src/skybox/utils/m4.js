@@ -1,4 +1,25 @@
-import { Matrix4 } from "three";
+
+
+
+/**
+ * normalizes a vector.
+ * @param {Vector3} v vector to normalize
+ * @param {Vector3} dst optional vector3 to store result
+ * @return {Vector3} dst or new Vector3 if not provided
+ * @memberOf module:webgl-3d-math
+ */
+function normalize(v, dst) {
+  dst = dst || new Array(3);
+  var length = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+  // make sure we don't divide by 0.
+  if (length > 0.00001) {
+    dst[0] = v[0] / length;
+    dst[1] = v[1] / length;
+    dst[2] = v[2] / length;
+  }
+  return dst;
+}
+
 
 /**
  * 
@@ -45,7 +66,6 @@ export class M4 {
     let e1 = this.elements;
     let e2 = m.elements;
     let res = new M4();
-    res.elements = new Array(16);
     for (let row = 0; row < 4; row++) {
       for (let col = 0; col < 4; col++) {
 
@@ -64,20 +84,84 @@ export class M4 {
 
   }
 
+
+  /**
+   * Takes two 4-by-4 matrices, a and b, and computes the product in the order
+   * that pre-composes b with a.  In other words, the matrix returned will
+   * transform by b first and then a.  Note this is subtly different from just
+   * multiplying the matrices together.  For given a and b, this function returns
+   * the same object in both row-major and column-major mode.
+   * @param {M4} a A matrix.
+   * @param {M4} b A matrix.
+   * @return {M4} dst or a new matrix if none provided
+   */
+  static multiplyBetween(a, b) {
+    let dst = new M4();
+    var b00 = b.elements[0 * 4 + 0];
+    var b01 = b.elements[0 * 4 + 1];
+    var b02 = b.elements[0 * 4 + 2];
+    var b03 = b.elements[0 * 4 + 3];
+    var b10 = b.elements[1 * 4 + 0];
+    var b11 = b.elements[1 * 4 + 1];
+    var b12 = b.elements[1 * 4 + 2];
+    var b13 = b.elements[1 * 4 + 3];
+    var b20 = b.elements[2 * 4 + 0];
+    var b21 = b.elements[2 * 4 + 1];
+    var b22 = b.elements[2 * 4 + 2];
+    var b23 = b.elements[2 * 4 + 3];
+    var b30 = b.elements[3 * 4 + 0];
+    var b31 = b.elements[3 * 4 + 1];
+    var b32 = b.elements[3 * 4 + 2];
+    var b33 = b.elements[3 * 4 + 3];
+    var a00 = a.elements[0 * 4 + 0];
+    var a01 = a.elements[0 * 4 + 1];
+    var a02 = a.elements[0 * 4 + 2];
+    var a03 = a.elements[0 * 4 + 3];
+    var a10 = a.elements[1 * 4 + 0];
+    var a11 = a.elements[1 * 4 + 1];
+    var a12 = a.elements[1 * 4 + 2];
+    var a13 = a.elements[1 * 4 + 3];
+    var a20 = a.elements[2 * 4 + 0];
+    var a21 = a.elements[2 * 4 + 1];
+    var a22 = a.elements[2 * 4 + 2];
+    var a23 = a.elements[2 * 4 + 3];
+    var a30 = a.elements[3 * 4 + 0];
+    var a31 = a.elements[3 * 4 + 1];
+    var a32 = a.elements[3 * 4 + 2];
+    var a33 = a.elements[3 * 4 + 3];
+    dst.elements[0] = b00 * a00 + b01 * a10 + b02 * a20 + b03 * a30;
+    dst.elements[1] = b00 * a01 + b01 * a11 + b02 * a21 + b03 * a31;
+    dst.elements[2] = b00 * a02 + b01 * a12 + b02 * a22 + b03 * a32;
+    dst.elements[3] = b00 * a03 + b01 * a13 + b02 * a23 + b03 * a33;
+    dst.elements[4] = b10 * a00 + b11 * a10 + b12 * a20 + b13 * a30;
+    dst.elements[5] = b10 * a01 + b11 * a11 + b12 * a21 + b13 * a31;
+    dst.elements[6] = b10 * a02 + b11 * a12 + b12 * a22 + b13 * a32;
+    dst.elements[7] = b10 * a03 + b11 * a13 + b12 * a23 + b13 * a33;
+    dst.elements[8] = b20 * a00 + b21 * a10 + b22 * a20 + b23 * a30;
+    dst.elements[9] = b20 * a01 + b21 * a11 + b22 * a21 + b23 * a31;
+    dst.elements[10] = b20 * a02 + b21 * a12 + b22 * a22 + b23 * a32;
+    dst.elements[11] = b20 * a03 + b21 * a13 + b22 * a23 + b23 * a33;
+    dst.elements[12] = b30 * a00 + b31 * a10 + b32 * a20 + b33 * a30;
+    dst.elements[13] = b30 * a01 + b31 * a11 + b32 * a21 + b33 * a31;
+    dst.elements[14] = b30 * a02 + b31 * a12 + b32 * a22 + b33 * a32;
+    dst.elements[15] = b30 * a03 + b31 * a13 + b32 * a23 + b33 * a33;
+    return dst;
+  }
+
   /**
    * 
    * @param {Number[]} eye - 摄像机所在位置
    * @param {Number[]} target - 目标所在位置
    * @param {Number[]} up - 摄像机的上方向
    */
-  lookAt(eye, target, up) {
+  static lookAt(eye, target, up) {
     //如何实现lookAt矩阵？
     //1.求出摄像机看向目标的方向
-    let eyeToTarget = [eye[0] - target[0], eye[1] - target[1], eye[2] - target[2]];
+    let eyeToTarget = normalize([eye[0] - target[0], eye[1] - target[1], eye[2] - target[2]]);
     //2.求出1的右方向
-    let right = crossV3(up, eyeToTarget);
+    let right = normalize(crossV3(up, eyeToTarget));
     //3.获取摄像机看向目标的上方向
-    let up2 = crossV3(eyeToTarget, right);
+    let up2 = normalize(crossV3(eyeToTarget, right));
 
     //lookat矩阵的组成：
     //其中R为右向量
@@ -89,25 +173,33 @@ export class M4 {
     //  U.x U.y U.z 0       0 1 0 -P.y
     //  D.x D.y D.z 0       0 0 1 -P.z
     //  0   0   0   1       0 0 0 1
+    //* 废案
+    // let m1 = new M4();
+    // m1.elements = [
+    //   right[0], right[1], right[2], 0,
+    //   up2[0], up2[1], up2[2], 0,
+    //   eyeToTarget[0], eyeToTarget[1], eyeToTarget[2], 0,
+    //   0, 0, 0, 1
+    // ];
 
-    let m1 = new M4();
-    m1.elements = [
+    // let m2 = new M4();
+    // m2.elements = [
+    //   1, 0, 0, -eye[0],
+    //   0, 1, 0, -eye[1],
+    //   0, 0, 1, -eye[2],
+    //   0, 0, 0, 1
+    // ];
+    // // console.log('m1: ', m1, 'm2: ', m2);
+    // return m1.multiply(m2);
+
+    let res = new M4();
+    res.elements = [
       right[0], right[1], right[2], 0,
       up2[0], up2[1], up2[2], 0,
       eyeToTarget[0], eyeToTarget[1], eyeToTarget[2], 0,
-      0, 0, 0, 1
+      eye[0], eye[1], eye[2], 1
     ];
-
-    let m2 = new M4();
-    m2.elements = [
-      1, 0, 0, -eye[0],
-      0, 1, 0, -eye[1],
-      0, 0, 1, -eye[2],
-      0, 0, 0, 1
-    ];
-    // console.log('m1: ', m1, 'm2: ', m2);
-    return m1.multiply(m2);
-
+    return res;
   }
 
 
@@ -218,14 +310,14 @@ export class M4 {
    * @param {number} aspect aspect of viewport (width / height)
    * @param {number} near near Z clipping plane
    * @param {number} far far Z clipping plane
-   * @param {Matrix4} [dst] optional matrix to store result
-   * @return {Matrix4} dst or a new matrix if none provided
+   * @param {M4} [dst] optional matrix to store result
+   * @return {M4} dst or a new matrix if none provided
    * @memberOf module:webgl-3d-math
    */
-  perspective(fieldOfViewInRadians, aspect, near, far, dst) {
+  static perspective(fieldOfViewInRadians, aspect, near, far, dst) {
     dst = dst || new M4();
-    var f = Math.tan(Math.PI * 0.5 - 0.5 * fieldOfViewInRadians);
-    var rangeInv = 1.0 / (near - far);
+    let f = Math.tan(Math.PI * 0.5 - 0.5 * fieldOfViewInRadians);
+    let rangeInv = 1.0 / (near - far);
 
     dst.elements[0] = f / aspect;
     dst.elements[1] = 0;

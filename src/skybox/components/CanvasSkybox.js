@@ -1,3 +1,4 @@
+import { Switch } from "antd";
 import React, { Component } from "react";
 import { Matrix4, Vector3 } from "three";
 import { initShaders, pointsIntoAttributeByAttributeName } from "../../learnWebGL/utils/glUtils";
@@ -31,8 +32,8 @@ class CanvasSkybox extends Component {
       new Image(require("../textures-skybox/back.jpg"), "TEXTURE_CUBE_MAP_NEGATIVE_X"),
       new Image(require("../textures-skybox/top.jpg"), "TEXTURE_CUBE_MAP_POSITIVE_Y"),
       new Image(require("../textures-skybox/bottom.jpg"), "TEXTURE_CUBE_MAP_NEGATIVE_Y"),
-      new Image(require("../textures-skybox/right.jpg"), "TEXTURE_CUBE_MAP_POSITIVE_Z"),
-      new Image(require("../textures-skybox/left.jpg"), "TEXTURE_CUBE_MAP_NEGATIVE_Z")
+      new Image(require("../textures-skybox/right.jpg"), "TEXTURE_CUBE_MAP_NEGATIVE_Z"),
+      new Image(require("../textures-skybox/left.jpg"), "TEXTURE_CUBE_MAP_POSITIVE_Z")
 
       // "../textures-skybox/back.jpg",
       // "../textures-skybox/front.jpg",
@@ -55,6 +56,11 @@ class CanvasSkybox extends Component {
 
     this.width = width || 750;
     this.height = height || 750;
+
+    this.state = {
+      autoSpin: true
+    }
+
   }
   render() {
     // const DISPLAY_NONE = { display: "none" };
@@ -63,15 +69,9 @@ class CanvasSkybox extends Component {
         <canvas ref={this.canvasRef} width={this.width} height={this.height} style={style} tabIndex="0">
           如果您看到了这条消息,说明您的浏览器不支持canvas
         </canvas>
-
-        <img ref={this.img1} src={require("../textures-skybox/erha_128_jpg.jpg")} alt="dog" style={{ display: "none" }} />
-
-        {/* <img ref={this.back} src={require("../textures-skybox/back.jpg")} alt="back" style={{ display: "none" }} />
-        <img ref={this.front} src={require("../textures-skybox/front.jpg")} alt="front" style={{ display: "none" }} />
-        <img ref={this.left} src={require("../textures-skybox/left.jpg")} alt="left" style={{ display: "none" }} />
-        <img ref={this.right} src={require("../textures-skybox/right.jpg")} alt="right" style={{ display: "none" }} />
-        <img ref={this.top} src={require("../textures-skybox/top.jpg")} alt="top" style={{ display: "none" }} />
-        <img ref={this.bottom} src={require("../textures-skybox/bottom.jpg")} alt="bottom" style={{ display: "none" }} /> */}
+        <p>
+          <Switch onClick={() => { this.setState({ autoSpin: !this.state.autoSpin }) }}></Switch>自动旋转
+        </p>
 
         {
           this.imgs.map((img, index) => {
@@ -195,9 +195,9 @@ class CanvasSkybox extends Component {
 
     requestAnimationFrame(drawScene);
 
-    let timer = setInterval(
-      () => drawScene(new Date() % 10000),100
-    )
+    // let timer = setInterval(
+    //   () => drawScene(new Date() % 10000), 100
+    // )
     // Draw the scene.
     function drawScene(time) {
       // time = time + 1
@@ -227,29 +227,29 @@ class CanvasSkybox extends Component {
       gl.enable(gl.CULL_FACE);
       gl.enable(gl.DEPTH_TEST);
 
-      // Clear the canvas AND the depth buffer.
+      // 清空画布
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
       // 计算投影矩阵
 
-      let m4 = new M4();
       let aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-      let projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
+      // console.log('aspect: ', aspect);
+      // console.log('fieldOfViewRadians: ', fieldOfViewRadians);
+      let projectionMatrix = M4.perspective(fieldOfViewRadians, aspect, 1, 2000); //* 投影矩阵没有问题
 
-      // camera going in circle 2 units from origin looking at origin
+      // 不断旋转目标对象位置
+      // 计算lookat矩阵
       let x = Math.cos(time * 0.1);
       let z = Math.sin(time * 0.1);
-      let cameraPosition = [0, 0, 0];
-      let target = [x, 0, z];
-      // console.log('target: ', target);
+      let cameraPosition = [x, 0, z];
+      let target = [0, 0, 0];
       let up = [0, 1, 0];
-      // Compute the camera's matrix using look at.
-      // console.log('cameraPosition, target, up: ', cameraPosition, target, up);
-      let cameraMatrix = m4.lookAt(cameraPosition, target, up);
-      // console.log('cameraMatrix: ', cameraMatrix);
+
+      let cameraMatrix = M4.lookAt(cameraPosition, target, up); //* LookAt没有问题
+
 
       // Make a view matrix from the camera matrix.
-      let viewMatrix = cameraMatrix.inverse();
+      let viewMatrix = cameraMatrix.inverse();  //* 观察矩阵没有问题
       // console.log('viewMatrix: ', viewMatrix);
 
       // We only care about direction so remove the translation
@@ -257,11 +257,11 @@ class CanvasSkybox extends Component {
       viewMatrix.elements[13] = 0;
       viewMatrix.elements[14] = 0;
 
-      let viewDirectionProjectionMatrix = projectionMatrix.multiply(viewMatrix);
-      console.log('projectionMatrix: ', projectionMatrix);
+      let viewDirectionProjectionMatrix = M4.multiplyBetween(projectionMatrix, viewMatrix);
+      // console.log('viewMatrix: ', viewMatrix);
+      // console.log('projectionMatrix: ', projectionMatrix);
       // console.log('viewDirectionProjectionMatrix: ', viewDirectionProjectionMatrix);
       let viewDirectionProjectionInverseMatrix = viewDirectionProjectionMatrix.inverse();
-      viewDirectionProjectionInverseMatrix = new Float32Array(viewDirectionProjectionInverseMatrix.elements)
 
       // viewDirectionProjectionInverseMatrix = new Float32Array([
       //   0.7765839695930481
@@ -285,7 +285,7 @@ class CanvasSkybox extends Component {
       // Set the uniforms
       gl.uniformMatrix4fv(
         viewDirectionProjectionInverseLocation, false,
-        viewDirectionProjectionInverseMatrix);
+        viewDirectionProjectionInverseMatrix.elements);
 
       // Tell the shader to use texture unit 0 for u_skybox
       gl.uniform1i(skyboxLocation, 0);
@@ -296,7 +296,7 @@ class CanvasSkybox extends Component {
       // Draw the geometry.
       gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
 
-      // requestAnimationFrame(drawScene);
+      requestAnimationFrame(drawScene);
     }
 
 
